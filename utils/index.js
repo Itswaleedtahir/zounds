@@ -148,4 +148,80 @@ module.exports = {
     });
   },
   verifyToken: (token, cb) => jwt.verify(token, secret, {}, cb),
+  sendResetPasswordMail: async (email, otp, res) => {
+    try {
+      const info = await transporter.sendMail({
+        from: process.env.BREVO_SENDER,
+        to: email,
+        subject: "Reset your Password",
+        text: "Reset your forgotten Password",
+        html: `<p>Dear User,<br><br>
+        Thank you for registering. Please enter the following OTP to reset your password: <strong>${otp}</strong><br><br>
+        Thank you,<br>
+        The Team</p>`,
+      });
+      console.log("Reset Password Email sent", info.messageId);
+    } catch (error) {
+      console.error("Failed to send email:", error);
+      return res.status(500).json({
+        msg: "Failed to send  email",
+        error: error.message || "Something went wrong."
+      });
+    }
+  },
+  sendLabelInvite: async (email, password, res) => {
+    try {
+      const info = await transporter.sendMail({
+        from: process.env.BREVO_SENDER,
+        to: email,
+        subject: "Your Label Credentials",
+        text: "Your Label Credentials",
+        html: `<p>Dear Label,<br><br>
+        Thank you for registering. Please find the provided details for the login <br><br>
+         email:<strong>${email}</strong><br><br>
+         password:<strong>${password}</strong><br><br>
+        Thank you,<br>
+        The Team</p>`,
+      });
+      console.log("Reset Password Email sent", info.messageId);
+    } catch (error) {
+      console.error("Failed to send email:", error);
+      return res.status(500).json({
+        msg: "Failed to send  email",
+        error: error.message || "Something went wrong."
+      });
+    }
+  },
+  sendArtistInvite: async (email, password, res) => {
+    try {
+      const info = await transporter.sendMail({
+        from: process.env.BREVO_SENDER,
+        to: email,
+        subject: "Your Label Credentials",
+        text: "Your Artist Credentials",
+        html: `<p>Dear Artist,<br><br>
+        Thank you for registering. Please find the provided details for the login <br><br>
+         email:<strong>${email}</strong><br><br>
+         password:<strong>${password}</strong><br><br>
+        Thank you,<br>
+        The Team</p>`,
+      });
+      console.log("Reset Password Email sent", info.messageId);
+    } catch (error) {
+      console.error("Failed to send email:", error);
+      return res.status(500).json({
+        msg: "Failed to send  email",
+        error: error.message || "Something went wrong."
+      });
+    }
+  },
+ checkRole:(requiredRoles)=> {
+    return function (req, res, next) {
+      // Check if the user's role is included in the list of required roles
+      if (!requiredRoles.includes(req.token.role)) {
+        return res.status(403).send("You dont have to access");
+      }
+      next();
+    };
+  }
 };

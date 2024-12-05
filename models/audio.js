@@ -8,9 +8,13 @@ var audioSchema = new Schema({
         ref: 'Song',
         required: true
     },
+    title: {
+        type: String,
+        required: true
+    },
     audio_quality: {
         type: String,
-        enum: ['128kbps', '192kbps', '320kbps', 'lossless'],
+        enum: ['128kbps', '256kbps', '312kbps', 'lossless'],
         required: true
     },
     file_path: {
@@ -23,6 +27,10 @@ var audioSchema = new Schema({
     },
     file_size: {
         type: mongoose.Decimal128, // Using Decimal128 for precision in storing file size
+        required: true
+    },
+    duration: {
+        type: String, // Mongoose doesn't have a TIME type, so you should use String if you keep it in 'HH:mm:ss' format, or Number for seconds.
         required: true
     },
     createdAt: {

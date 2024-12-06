@@ -272,5 +272,5 @@ userPrefrences: async(req,res)=>{
         message: error.message || 'Internal server error'
     });
 }
-}
+},
 };

@@ -48,6 +48,28 @@ module.exports = {
                 message: error.message || 'Internal server error'
             });
         }
+    },
+    deleteGenre: async(req,res)=>{
+        try {
+            const deletedGenre = await Genre.findByIdAndDelete(req.params.id);
+            if (!deletedGenre) return res.status(404).send("No genre found with that ID.");
+           return res.status(200).send("Genre Deleted",deletedGenre);
+        } catch (error) {
+           return res.status(500).send(error);
+        }
+    },
+    updateGenre: async(req,res)=>{
+        try {
+            const {name,picture}=req.body
+            const updatedGenre = await Genre.findByIdAndUpdate(req.params.id, {
+                name: name,
+                picture: picture
+            }, { new: true });
+            if (!updatedGenre) return res.status(404).send("No genre found with that ID.");
+            res.status(200).send(updatedGenre);
+        } catch (error) {
+            res.status(500).send(error);
+        }
     }
 };
 

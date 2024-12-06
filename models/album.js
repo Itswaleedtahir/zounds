@@ -3,11 +3,16 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 var albumSchema = new Schema({
-    artist_id: {
+    artist_id: [{
         type: Schema.Types.ObjectId,  // Referencing Artist model
         ref: 'Artist',
         required: true
-    },
+    }],
+    songs_id:[{
+        type: Schema.Types.ObjectId,  // Referencing Artist model
+        ref: 'Song',
+        required: true
+    }],
     title: {
         type: String,
         required: true
@@ -19,15 +24,6 @@ var albumSchema = new Schema({
     cover_image: {
         type: String,
         default: null
-    },
-    genre: {
-        type: String,
-        required: true
-    },
-    category: {
-        type: String,
-        enum: ['video_song', 'song', 'audio'],
-        required: true
     },
     createdAt: {
         type: Date,

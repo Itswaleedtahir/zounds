@@ -28,6 +28,10 @@ var user = new Schema({
         enum: ['SUPER_ADMIN', 'LABEL',"SUPER_ADMIN_STAFF","LABEL_STAFF","ARTIST"],
         required: true
     },
+    permissions:[{
+        type: Schema.Types.ObjectId, // Assuming references to Artist documents
+        ref: 'Action'
+    }],
     createdAt: {
         type: Date,
         default: Date.now

@@ -169,14 +169,14 @@ module.exports = {
       });
     }
   },
-  sendLabelInvite: async (email, password, res) => {
+  sendUserInvite: async (email, password, role,res) => {
     try {
       const info = await transporter.sendMail({
         from: process.env.BREVO_SENDER,
         to: email,
-        subject: "Your Label Credentials",
-        text: "Your Label Credentials",
-        html: `<p>Dear Label,<br><br>
+        subject: `Your ${role} Credentials`,
+        text: `Your ${role} Credentials`,
+        html: `<p>Dear ${role},<br><br>
         Thank you for registering. Please find the provided details for the login <br><br>
          email:<strong>${email}</strong><br><br>
          password:<strong>${password}</strong><br><br>
@@ -223,5 +223,28 @@ module.exports = {
       }
       next();
     };
-  }
+  },
+  checkPermission : (...permissions) => {
+    return async (req, res, next) => {
+        console.log("user", req.token); // Adjusted to use req.user
+
+        if (!req.token || !req.token.permissions) {
+            return res.status(403).json({ message: 'No permissions found for user.' });
+        }
+
+        const hasAllPermissions = permissions.some((perm) => {
+          console.log("pre,",perm)
+            const [requiredResource, requiredAction] = perm.split(',');
+            return req.token.permissions.some(permission =>
+                permission.resource === requiredResource && permission.action === requiredAction
+            );
+        });
+
+        if (!hasAllPermissions) {
+            return res.status(403).json({ message: 'You do not have the required permissions to perform this action.' });
+        }
+
+        next();
+    };
+}
 };

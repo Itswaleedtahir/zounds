@@ -3,20 +3,18 @@ const Song = require("../models/song")
 const Audio = require("../models/audio")
 const Video = require("../models/video")
 const User = require("../models/user")
+const Role = require('../models/role'); 
 let bcrypt = require("bcrypt");
 const crypto = require('crypto');
 let utils = require("../utils/index");
 const { sendResetPasswordMail,sendUserInvite} = require("../utils");
 const Action = require("../models/actions")
 let methods = {
-   addAdmin : async (req, res) => {
+  addAdmin: async (req, res) => {
     try {
-        let { email, password, role } = req.body;
+        let { email, password, role: roleId } = req.body;
 
-        // Access the role of the user making the request
-        const loggedInUserRole = req.token.role;
-        console.log("role",req.token)
-        if (!email || !password || !role) {
+        if (!email || !password || !roleId) {
             return res.status(400).json({
                 msg: "Please provide email, password, and role",
                 success: false,
@@ -31,23 +29,35 @@ let methods = {
             });
         }
 
+        // Fetch the role document using the role ID
+        let role = await Role.findById(roleId);
+        if (!role) {
+            return res.status(404).json({
+                msg: "Role not found",
+                success: false,
+            });
+        }
+
         // Hash the password
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        // Access the role of the user making the request
+        const loggedInUserRole = req.token.role;
+
         // Verify that the logged-in user can create or assign the requested role
-        if ((role === "SUPER_ADMIN" || role === "SUPER_ADMIN_STAFF" || role === "LABEL") && loggedInUserRole !== "SUPER_ADMIN") {
+        if ((["SUPER_ADMIN", "SUPER_ADMIN_STAFF", "LABEL"].includes(role.role)) && loggedInUserRole !== "SUPER_ADMIN") {
             return res.status(403).json({
                 msg: "You do not have permission to assign SUPER_ADMIN roles",
                 success: false,
             });
-        } else if ((role === "LABEL_STAFF" || role === "ARTIST") && loggedInUserRole !== "LABEL") {
+        } else if ((["LABEL_STAFF", "ARTIST"].includes(role.role)) && loggedInUserRole !== "LABEL") {
             return res.status(403).json({
                 msg: "You do not have permission to assign LABEL roles",
                 success: false,
             });
         }
 
-        let admin = new Admin({ email, password: hashedPassword, user_role: role });
+        let admin = new Admin({ email, password: hashedPassword, user_role: roleId });
         let addUser = await admin.save();
         if (!addUser) {
             return res.status(500).json({
@@ -55,7 +65,8 @@ let methods = {
                 success: false,
             });
         }
-       await sendUserInvite(email,password,role)
+        // Assuming sendUserInvite is a function you have for sending invitations
+        await sendUserInvite(email, password, role.role); 
         return res.status(200).json({
             user: addUser,
             success: true,
@@ -70,58 +81,68 @@ let methods = {
     }
 },
 
-    adminLogin: async(req,res)=>{
-        try {
-            const { email, password } = req.body;
-            if (!email || !password) {
-              return res.status(401).json({
-                msg: "Please enter right Credentials!",
-                success: false,
-              });
-            }
-            let admin = await Admin.findOne({ email }).populate('permissions');
-            if (!admin) {
-              return res.status(404).json({
-                msg: "User with this email does not exist",
-                success: false,
-              });
-            }
-
-        
-            let match = await utils.comparePassword(password, admin.password);
-            if (!match) {
-              return res.status(401).json({
-                msg: "Wrong Password Entered",
-                success: false,
-              });
-            }
-        
-            let access_token = await utils.issueToken({
-              _id: admin._id,
-              email:admin.email,
-              role:admin.user_role,
-              permissions: admin.permissions
-            });
-        
-            let result = {
-              user: {
-                _id: admin._id,
-                email: email,
-                permissions: admin.permissions
-              },
-              access_token,
-            };
-        
-            return res.status(200).json({ success: true, result });
-          } catch (error) {
-            console.log("error",error)
-            return res.status(500).json({
-              msg: "Login Failed",
-              error: error,
+adminLogin: async(req, res) => {
+  try {
+      const { email, password } = req.body;
+      if (!email || !password) {
+          return res.status(401).json({
+              msg: "Please enter right Credentials!",
               success: false,
-            });
+          });
+      }
+      let admin = await Admin.findOne({ email }).populate({
+          path: 'user_role',
+          populate: {
+              path: 'Permissions'
           }
-    },
+      });
+      if (!admin) {
+          return res.status(404).json({
+              msg: "User with this email does not exist",
+              success: false,
+          });
+      }
+
+      let match = await utils.comparePassword(password, admin.password);
+      if (!match) {
+          return res.status(401).json({
+              msg: "Wrong Password Entered",
+              success: false,
+          });
+      }
+      console.log("admin",admin)
+      let permissions = admin.user_role.Permissions.map(permission => {
+          return {resource: permission.resource, action: permission.action};
+      });
+
+      let access_token = await utils.issueToken({
+          _id: admin._id,
+          email: admin.email,
+          role: admin.user_role.role,
+          permissions: permissions
+      });
+
+      let result = {
+          user: {
+              _id: admin._id,
+              email: admin.email,
+              role: admin.user_role.role,
+              permissions: permissions
+          },
+          access_token,
+      };
+
+      return res.status(200).json({ success: true, result });
+  } catch (error) {
+      console.log("error", error)
+      return res.status(500).json({
+          msg: "Login Failed",
+          error: error,
+          success: false,
+      });
+  }
+},
+
     forgetPassword: async(req,res)=>{
         try {
             let email = req.body.email;

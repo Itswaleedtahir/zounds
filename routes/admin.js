@@ -10,7 +10,7 @@ const {ROLES} = require("../utils/constant")
 const controller = require("../controllers/adminController");
 console.log("roles",ROLES)
 // Routes
-router.post("/createAdmin",authPolicy,checkPermission("Labels,Add","Super_Admin,Add"),controller.addAdmin)
+router.post("/createAdmin",authPolicy,controller.addAdmin)
 router.post("/adminLogin",controller.adminLogin)
 router.post("/adminForgot",controller.forgetPassword)
 router.post("/adminVerify",controller.adminVerify)

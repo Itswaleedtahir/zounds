@@ -24,14 +24,9 @@ var user = new Schema({
         default: null
     },
     user_role: {
-        type: String,
-        enum: ['SUPER_ADMIN', 'LABEL',"SUPER_ADMIN_STAFF","LABEL_STAFF","ARTIST"],
-        required: true
-    },
-    permissions:[{
         type: Schema.Types.ObjectId, // Assuming references to Artist documents
-        ref: 'Action'
-    }],
+        ref: 'Role'
+    },
     createdAt: {
         type: Date,
         default: Date.now

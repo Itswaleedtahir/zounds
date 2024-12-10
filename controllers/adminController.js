@@ -4,6 +4,7 @@ const Audio = require("../models/audio")
 const Video = require("../models/video")
 const User = require("../models/user")
 const Role = require('../models/role'); 
+const Artist = require("../models/artist")
 let bcrypt = require("bcrypt");
 const crypto = require('crypto');
 let utils = require("../utils/index");
@@ -12,8 +13,9 @@ const Action = require("../models/actions")
 let methods = {
   addAdmin: async (req, res) => {
     try {
-        let { email, password, role: roleId } = req.body;
-
+        let { email, password, role: roleId,name,bio,image } = req.body;
+      const label_id= req.token._id
+      console.log("labellll",label_id)
         if (!email || !password || !roleId) {
             return res.status(400).json({
                 msg: "Please provide email, password, and role",
@@ -56,7 +58,6 @@ let methods = {
                 success: false,
             });
         }
-
         let admin = new Admin({ email, password: hashedPassword, user_role: roleId });
         let addUser = await admin.save();
         if (!addUser) {
@@ -64,6 +65,11 @@ let methods = {
                 msg: "Failed to add admin",
                 success: false,
             });
+        }
+        console.log("role",role)
+        if(role.role === "ARTIST"){
+          let artist = new Artist({ name, bio, profile_picture:image,userId: addUser._id,label_id:label_id});
+          let artistAdd = await artist.save();
         }
         // Assuming sendUserInvite is a function you have for sending invitations
         await sendUserInvite(email, password, role.role); 
@@ -114,12 +120,14 @@ adminLogin: async(req, res) => {
       let permissions = admin.user_role.Permissions.map(permission => {
           return {resource: permission.resource, action: permission.action};
       });
-
+      let artist = await Artist.findOne({ userId:admin._id })
+      console.log("artisy",artist)
       let access_token = await utils.issueToken({
           _id: admin._id,
           email: admin.email,
           role: admin.user_role.role,
-          permissions: permissions
+          permissions: permissions,
+          artist: artist?._id || null
       });
 
       let result = {
@@ -127,7 +135,8 @@ adminLogin: async(req, res) => {
               _id: admin._id,
               email: admin.email,
               role: admin.user_role.role,
-              permissions: permissions
+              permissions: permissions,
+              artist: artist?._id || null
           },
           access_token,
       };

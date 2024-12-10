@@ -11,9 +11,17 @@ var artistSchema = new Schema({
         type: String,
         default: null
     },
+    userId: {
+        type: Schema.Types.ObjectId, // Assuming references to Artist documents
+        ref: 'Dashboarduser'
+    },
     profile_picture: {
         type: String,
         default: null
+    },
+    label_id:{
+         type: Schema.Types.ObjectId, // Assuming references to Artist documents
+        ref: 'Dashboarduser'
     },
     createdAt: {
         type: Date,

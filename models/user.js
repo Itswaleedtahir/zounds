@@ -26,6 +26,9 @@ var userSchema = new Schema({
         type: String,
         required: true
     },
+    image:{
+        type: String
+    },
     password: {
         type: String,
         required: true

@@ -2,13 +2,14 @@ const { Router } = require("express");
 const router = Router();
 
 // Middlewares
-
+const authPolicy = require("../utils/authPolicy");
+const {checkPermission}=require("../utils")
 // Controllers
 const controller = require("../controllers/artist");
 
 // Routes
 router.post("/createArtist", controller.createArtist)
-router.get("/getArtists", controller.getArtist)
+router.get("/getArtists",authPolicy,checkPermission("Artists,View") ,controller.getArtist)
 router.get("/getRecentArtists", controller.getRecentArtists)
 router.post("/createAlbum", controller.createAlbum)
 router.post("/createSong", controller.createSong)

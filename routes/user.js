@@ -17,5 +17,7 @@ router.post("/forgot-password", controller.forgotPassword);
 router.post("/reset-password", controller.resetPassword);
 router.post("/createPreferences",authPolicy ,controller.userPrefrences);
 router.post("/uplaodFile", controller.fileUploadS3);
+router.post("/googleLogin",controller.googleVerify)
+router.post("/appleLogin",controller.appleLogin)
 
 module.exports = router;

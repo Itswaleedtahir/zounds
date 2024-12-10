@@ -5,7 +5,6 @@ const router = Router();
 const authPolicy = require("../utils/authPolicy");
 // Controllers
 const controller = require("../controllers/role");
-const {checkPermission}=require("../utils")
 // Routes
 
 router.post("/createRole",authPolicy,controller.createRole)

@@ -3,11 +3,12 @@ const { generateErrorInstance, sendVerificationEmail, ResendVerificationEmail ,s
 const bcrypt = require("bcryptjs");
 const crypto = require('crypto');
 const Preference = require("../models/preferences")
+const axios = require("axios")
 module.exports = {
   addUser: async (req, res) => {
     try {
-        const { email, password } = req.body;
-        if (!email || !password) {
+        const { email, password,name } = req.body;
+        if (!email || !password|| !name) {
             return res.status(400).json({ msg: "Please provide user data", success: false });
         }
         let userData = await Users.findOne({ email: email });
@@ -22,13 +23,13 @@ module.exports = {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Create user
-        const addUser = new Users({ email, password: hashedPassword, otp });
+        const addUser = new Users({ email, password: hashedPassword, otp,firstName:name });
         await addUser.save();
 
         // Send the OTP email
         await sendVerificationEmail(email, otp, res);
 
-        return res.status(200).json({ user: addUser, msg: "OTP sent to your email", success: true });
+        return res.status(200).json({ msg: "OTP sent to your email", success: true });
     } catch (error) {
         console.error("error", error);
         return res.status(500).json({ msg: "Failed to add user", error: error.message, success: false });
@@ -74,7 +75,7 @@ resendOTP: async (req, res) => {
 
       // Send the OTP email
       await ResendVerificationEmail(email, newOtp, res);
-      return res.status(200).json({ msg: "OTP resent successfully", otp: newOtp, success: true });
+      return res.status(200).json({ msg: "OTP resent successfully",success: true });
   } catch (error) {
       return res.status(500).json({ msg: "Failed to resend OTP", error: error.message, success: false });
   }
@@ -99,7 +100,7 @@ login: async (req, res) => {
         email:user.email,
       });
 
-      return res.status(200).send({ user, access_token });
+      return res.status(200).send({ user, access_token, msg: "Login successful",success: true });
   } catch (err) {
       console.error(err);
       return res.status(err.status || 500).send({ message: err.message || "Something went wrong!" });
@@ -273,4 +274,136 @@ userPrefrences: async(req,res)=>{
     });
 }
 },
+googleVerify:async(req,res)=>{
+    try {
+      const {accessToken}=req.body
+      const response = await axios.get('https://www.googleapis.com/oauth2/v1/userinfo', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+
+      console.log('Response of Google', response.data);
+      console.log('Google email is', response.data.email);
+    
+      const user = {
+        email: response.data.email,
+        image: response.data.picture,
+        social_id: response.data.id,
+        first_name: response.data.given_name,
+        last_name: response.data.family_name,
+        password: `${response.data.email}_${response.data.id}`
+      };
+      const findUser = await Users.findOne({
+        googleId:user.social_id
+      })
+      if(findUser){
+        let access_token = await issueToken({
+          _id: findUser._id,
+          email:findUser.email,
+        });
+        let result = {
+          user: {
+            _id: findUser._id,
+            email:findUser.email,
+            imageUrl: findUser.image,
+          }
+        };
+
+        return res.status(200).send({message:"User exist",user:result,token: access_token,success:true})
+      }else {
+        const newUser = new Users({
+          email: user.email,
+          googleId: user.social_id,
+          firstName: user.first_name,
+          lastName: user.last_name,
+          image: user.image,
+          isVerified:true,
+          password:user.password
+        });
+  
+        const savedUser = await newUser.save();
+        let access_token = await issueToken({
+          _id: savedUser._id,
+          email: savedUser.email,
+        });
+        console.log("user",savedUser)
+        let result = {
+          user: {
+            _id: savedUser._id,
+            email:savedUser.email,
+            imageUrl: savedUser.image,
+          }
+        };
+        return res.status(201).json({ message: "User created",user:result ,token: access_token, success:true});
+      }
+    
+    } catch (error) {
+      console.log('Error', error);
+      return res.status(500).send({ message: 'Error', error: error.message });
+    }
+  },
+  appleLogin:async(req,res)=>{
+    try {
+      const { idToken, appleId ,first_name,last_name} = req.body;
+      const userData = jwt.decode(idToken)
+      console.log("userData",userData)
+      const email =
+      idToken === null
+        ? null
+        : jwt.decode(idToken).email == undefined
+        ? null
+        : jwt.decode(idToken).email;
+    // console.log("--> email: ", email);
+      console.log("email",email)
+      const user = await Users.findOne({
+        email:email
+      })
+    if (user) {
+      console.log("insideif")
+          const access_token = await issueToken({
+            _id: user.id,
+            email: user.email,
+          });
+          let result = {
+            user: {
+              _id: user._id,
+              email:user.email,
+              imageUrl: user.image,
+            }
+          };
+          return res.status(200).send({message:"User exist",token: access_token,success:true})
+        
+    }else{
+      console.log("insideelseeee")
+        const newUser = new Users({
+          email: userData.email,
+          appleId:appleId,
+          firstName: first_name ?? null,  // If first_name is null, it defaults to null
+          lastName: last_name ?? null, 
+          image: userData?.image,
+          isVerified:true,
+          password:userData?.password
+        });
+  
+        const savedUser = await newUser.save();
+        let access_token = await issueToken({
+          _id: savedUser._id,
+          email: savedUser.email,
+        });
+        console.log("user",savedUser)
+        let result = {
+          user: {
+            _id: savedUser._id,
+            email:savedUser.email,
+            imageUrl: savedUser.image,
+          }
+        };
+        return res.status(201).json({ message: "User created", token: access_token,success:true});
+      }
+    } catch (error) {
+      console.log('Error', error);
+      return res.status(500).send({ message: 'Error', error: error.message });
+    }
+  },
 };

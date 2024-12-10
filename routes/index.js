@@ -8,6 +8,7 @@ const genreRouter = require("./genre");
 const adminRouter = require("./admin");
 const labelRouter = require("./label");
 const roleRouter = require("./roles");
+const albumRouter = require("./album");
 
 
 router.use('/users', userRouter);
@@ -16,5 +17,6 @@ router.use('/genre', genreRouter);
 router.use('/admin', adminRouter);
 router.use('/label', labelRouter);
 router.use('/role', roleRouter);
+router.use('/album', albumRouter);
 
 module.exports = router;

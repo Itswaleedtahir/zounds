@@ -1,7 +1,9 @@
 const Song = require("../models/song")
 const Audio = require("../models/audio")
 const Video = require("../models/video")
+const Artist = require("../models/artist")
 const Admin = require("../models/dashboardUsers")
+const Album = require("../models/album")
 const {sendArtistInvite}=require("../utils/index")
 let bcrypt = require("bcrypt");
 const crypto = require('crypto');
@@ -121,13 +123,17 @@ let methods = {
                     Video.find({ song_id: song._id })
                 ]);
     
-                // Attach audio and video records to the song object
-                songObject.audios = audios;
-                songObject.videos = videos;
+                // Attach audio and video records to the song object only if they exist
+            if (audios.length > 0) {
+              songObject.audios = audios;
+          }
+          if (videos.length > 0) {
+              songObject.videos = videos;
+          }
                 return songObject;
             }));
     
-            res.json(songsWithMedia);
+           return res.json(songsWithMedia);
         } catch (error) {
             console.error(error);
             res.status(500).json({ message: "An error occurred while fetching songs." });
@@ -190,7 +196,152 @@ let methods = {
             console.error(error);
            return res.status(500).json({ message: "An error occurred during the update process." });
         }
+    },
+    getLabelArtists: async(req,res)=>{
+      const labelId=req.token._id
+      try {
+        console.log("labe",labelId)
+        const artists = await Artist.find({ label_id: labelId })
+            .populate('userId')  // Assuming you might also want to populate the Dashboarduser reference in userId
+            .populate('label_id', 'name email')  // Optionally, populate only specific fields from the label
+            .exec();
+return res.status(200).send(artists)
+    } catch (error) {
+        console.error('Error fetching artists:', error);
+        throw error; // or handle error as appropriate
     }
+    },
+  getSingleArtist : async (req, res) => {
+      const { artistId } = req.params;
+  
+      try {
+          const artist = await Artist.findById(artistId)
+              .populate({
+                  path: 'userId',
+                  model: 'Dashboarduser'
+              });
+  
+          if (!artist) {
+              return res.status(404).send({ message: 'No artist found with the provided ID' });
+          }
+  
+          // Fetch albums where this artist is referenced
+          const albums = await Album.find({ artist_id: artist._id })
+              .populate('songs_id')
+              .populate({
+                  path: 'artist_id',  
+                  populate: {
+                      path: 'userId',   
+                      model: 'Dashboarduser' 
+                  }
+              });
+  
+          // Get all song IDs from the albums to fetch associated audios and videos
+          const songIds = albums.flatMap(album => album.songs_id.map(song => song._id));
+  
+          const audios = await Audio.find({ song_id: { $in: songIds } });
+          const videos = await Video.find({ song_id: { $in: songIds } });
+  
+          // Create maps to easily link audios and videos with their respective songs
+          const audioMap = audios.reduce((map, audio) => {
+              map[audio.song_id.toString()] = audio;
+              return map;
+          }, {});
+  
+          const videoMap = videos.reduce((map, video) => {
+              map[video.song_id.toString()] = video;
+              return map;
+          }, {});
+  
+          // Enhance albums with audios and videos information
+          const enhancedAlbums = albums.map(album => ({
+              ...album._doc,
+              songs_id: album.songs_id.map(song => ({
+                  ...song._doc,
+                  audio: audioMap[song._id.toString()],
+                  video: videoMap[song._id.toString()]
+              }))
+          }));
+  
+          // Return the artist data along with the enhanced albums
+          res.status(200).send({ artist, albums: enhancedAlbums });
+      } catch (error) {
+          console.error('Error fetching artist and albums:', error);
+          res.status(500).send({ message: 'Internal server error', error });
+      }
+  },
+  updateArtist: async(req,res)=>{
+    const { id } = req.params;
+
+    try {
+      const {name,bio,profile_picture}=req.body
+        const updatedArtist = await Artist.findByIdAndUpdate(id,req.body, { new: true});
+        if (!updatedArtist) {
+            return res.status(404).send({ message: 'Artist not found' });
+        }
+        res.status(200).send(updatedArtist);
+    } catch (error) {
+        res.status(400).send({ message: 'Error updating artist', error: error.message });
+    }
+  },
+  deleteArtist: async(req,res)=>{
+    const { id } = req.params;
+
+    try {
+        const artist = await Artist.findById(id);
+        if (!artist) {
+            return res.status(404).send({ message: 'Artist not found' });
+        }
+
+        // Delete the Dashboarduser associated with the artist
+        if (artist.userId) {
+            await Admin.findByIdAndDelete(artist.userId);
+        }
+
+        // Remove artist from albums
+        await Album.updateMany(
+            { artist_id: artist._id },
+            { $pull: { artist_id: artist._id } }
+        );
+
+        // Finally, delete the artist
+        await Artist.findByIdAndDelete(id);
+
+        res.status(200).send({ message: 'Artist and associated data deleted successfully' });
+    } catch (error) {
+        console.error('Failed to delete artist and associated data:', error);
+        res.status(500).send({ message: 'Error deleting artist', error });
+    }
+  },
+  deleteSong: async(req,res)=>{
+    const { songId } = req.params;
+
+    try {
+        // Delete the song document
+        const song = await Song.findById(songId);
+        if (!song) {
+            return res.status(404).send({ message: 'Song not found' });
+        }
+
+        // Remove the song's ID from any albums
+        await Album.updateMany(
+            { songs_id: song._id },
+            { $pull: { songs_id: song._id } }
+        );
+
+        // Delete associated Audio documents
+        await Audio.deleteMany({ song_id: song._id });
+
+        // Delete associated Video documents
+        await Video.deleteMany({ song_id: song._id });
+         // Finally, delete the artist
+         await Song.findByIdAndDelete(songId);
+      return  res.status(200).send({ message: 'Song and all associated data deleted successfully' });
+    } catch (error) {
+        console.error('Failed to delete song and associated data:', error);
+       return res.status(500).send({ message: 'Error deleting song', error });
+    }
+  }
 }
 
 module.exports = methods;

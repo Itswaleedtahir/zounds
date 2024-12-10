@@ -10,7 +10,7 @@ app.use(cors());
 app.use(express.json());
 app.use(upload());
 app.use("/api", Router);
-var port = process.env.PORT || 3001;
+var port = process.env.PORT || 4001;
 var env = process.env.NODE_ENV;
 const startServer = async () => {
   try {

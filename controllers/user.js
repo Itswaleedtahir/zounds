@@ -17,7 +17,7 @@ module.exports = {
         }
 
         // Generate a 4-digit OTP
-        const otp = crypto.randomInt(1000, 9999);
+        const otp = crypto.randomInt(100000, 999999);
 
         // Hash the password
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -69,7 +69,7 @@ resendOTP: async (req, res) => {
       if (!user) {
           return res.status(404).json({ msg: "User not found", success: false });
       }
-      const newOtp = crypto.randomInt(1000, 9999);
+      const newOtp = crypto.randomInt(100000, 999999);
       user.otp = newOtp;
       await user.save();
 
@@ -114,7 +114,7 @@ forgotPassword: async (req, res) => {
       if (!user) {
           return res.status(404).json({ msg: "User with this email does not exist", success: false });
       }
-      const newOtp = crypto.randomInt(1000, 9999);
+      const newOtp = crypto.randomInt(100000, 999999);
       user.otp = newOtp;
       await user.save();
 

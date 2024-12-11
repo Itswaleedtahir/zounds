@@ -13,6 +13,11 @@ var albumSchema = new Schema({
         ref: 'Song',
         required: true
     }],
+    photos_id:[{
+        type: Schema.Types.ObjectId,  // Referencing Artist model
+        ref: 'Photo',
+        required: true
+    }],
     title: {
         type: String,
         required: true

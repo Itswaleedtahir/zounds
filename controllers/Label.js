@@ -4,6 +4,7 @@ const Video = require("../models/video")
 const Artist = require("../models/artist")
 const Admin = require("../models/dashboardUsers")
 const Album = require("../models/album")
+const Photo = require("../models/photo")
 const {sendArtistInvite}=require("../utils/index")
 let bcrypt = require("bcrypt");
 const crypto = require('crypto');
@@ -341,6 +342,85 @@ return res.status(200).send(artists)
         console.error('Failed to delete song and associated data:', error);
        return res.status(500).send({ message: 'Error deleting song', error });
     }
+  },
+  createPhoto: async(req,res)=>{
+    try {
+      const label_id = req.token._id;
+      console.log("Label ID:", label_id);
+  
+      // Check if the incoming data is an array
+      if (!Array.isArray(req.body.photos)) {
+          return res.status(400).json({ message: "Photos must be an array." });
+      }
+  
+      const photosArray = req.body.photos; // Expect an array of photo objects
+  
+      // Use map() to create an array of new Photo instances
+      const photoInstances = photosArray.map(photo => {
+          return new Photo({
+              img_url: photo.img_url,
+              title: photo.title,
+              label_id: label_id
+          });
+      });
+  
+      // Use Promise.all to save all Photo instances concurrently
+      const savedPhotos = await Promise.all(photoInstances.map(photo => photo.save()));
+      return res.status(201).json(savedPhotos);
+  } catch (error) {
+      return res.status(400).json({ message: error.message });
+  }
+  
+  },
+  getPhotos: async(req,res)=>{
+    const label_id = req.token._id
+    try {
+      const photos = await Photo.find({label_id});
+      return res.status(200).json(photos);
+  } catch (error) {
+      return res.status(500).json({ message: error.message });
+  }
+  },
+  getSinglePhoto: async(req,res)=>{
+    try {
+      const photo = await Photo.findById(req.params.id);
+      if (photo) {
+       return   res.status(200).json(photo);
+      } else {
+        return  res.status(404).json({ message: 'Photo not found' });
+      }
+  } catch (error) {
+     return res.status(500).json({ message: error.message });
+  }
+  },
+  updatePhoto: async(req,res)=>{
+    try {
+
+      const updatedPhoto = await Photo.findByIdAndUpdate(req.params.id, req.body, { new: true });
+     return res.status(200).json(updatedPhoto);
+  } catch (error) {
+     return res.status(400).json({ message: error.message });
+  }
+  },
+  deletePhoto: async(req,res)=>{
+    try {
+      const photoId = req.params.id;
+      const photo = await Photo.findByIdAndDelete(photoId);
+
+      if (!photo) {
+          return res.status(404).json({ message: 'Photo not found' });
+      }
+
+      // Update albums to remove deleted photo reference
+      await Album.updateMany(
+          { photos_id: photoId },
+          { $pull: { photos_id: photoId } }
+      );
+
+    return  res.status(200).json({ message: 'Photo deleted' });
+  } catch (error) {
+    return  res.status(500).json({ message: error.message });
+  }
   }
 }
 

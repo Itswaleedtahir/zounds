@@ -11,7 +11,7 @@ const roleRouter = require("./roles");
 const albumRouter = require("./album");
 
 
-router.use('/users', userRouter);
+router.use('/v1/users', userRouter);
 router.use('/artists', artistRouter);
 router.use('/genre', genreRouter);
 router.use('/admin', adminRouter);

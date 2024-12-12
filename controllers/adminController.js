@@ -413,7 +413,7 @@ adminLogin: async(req, res) => {
   },
   getAllUsers: async(req,res)=>{
     try {
-      const users = await Admin.find({ _id: { $ne: req.token._id } });
+      const users = await Admin.find({ _id: { $ne: req.token._id } }).populate("user_role");
      return res.send(users);
   } catch (error) {
      return res.status(500).send(error);

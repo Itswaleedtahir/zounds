@@ -39,10 +39,12 @@ module.exports = {
 verifyUser: async (req, res) => {
   try {
       const { email, otp } = req.body;
+      console.log("otp",otp)
       if (!email || !otp) {
           return res.status(400).json({ msg: "Please provide both email and OTP", success: false });
       }
       let user = await Users.findOne({ email });
+      console.log("user",user)
       if (!user) {
           return res.status(404).json({ msg: "User not found", success: false });
       }
@@ -85,15 +87,15 @@ login: async (req, res) => {
   try {
       const { email, password } = req.body;
       if (!email || !password) {
-          throw generateErrorInstance({ status: 400, message: "Required fields can't be empty" });
+          throw generateErrorInstance({ status: 400,success:false ,msg: "Required fields can't be empty" });
       }
       let user = await Users.findOne({ email });
       if (!user) {
-          throw generateErrorInstance({ status: 404, message: "User not found" });
-      }
+        return res.status(404).json({ msg: "User not found", success: false });
+    }
       const passwordMatched = await bcrypt.compare(password, user.password);
       if (!passwordMatched) {
-          throw generateErrorInstance({ status: 401, message: "Invalid Password" });
+          throw generateErrorInstance({ status: 401, success: false,msg: "Invalid Password" });
       }
       let access_token = await issueToken({
         _id: user._id,

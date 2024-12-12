@@ -21,6 +21,7 @@ if (!release_date || isNaN(new Date(release_date).getTime())) {
 }
         try {
             const album = new Album({
+                label_id:req.token._id,
                 artist_id,
                 songs_id,
                 title,

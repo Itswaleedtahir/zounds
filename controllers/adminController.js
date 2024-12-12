@@ -5,6 +5,10 @@ const Video = require("../models/video")
 const User = require("../models/user")
 const Role = require('../models/role'); 
 const Artist = require("../models/artist")
+const Event = require("../models/event")
+const News = require("../models/news")
+const Photo = require("../models/photo")
+const Album = require("../models/album")
 let bcrypt = require("bcrypt");
 const crypto = require('crypto');
 let utils = require("../utils/index");
@@ -13,7 +17,7 @@ const Action = require("../models/actions")
 let methods = {
   addAdmin: async (req, res) => {
     try {
-        let { email, password, role: roleId,name,bio,image } = req.body;
+        let { email, password, role: roleId,name,bio,image,firstName,lastName } = req.body;
       const label_id= req.token._id
       console.log("labellll",label_id)
         if (!email || !password || !roleId) {
@@ -58,7 +62,7 @@ let methods = {
                 success: false,
             });
         }
-        let admin = new Admin({ email, password: hashedPassword, user_role: roleId });
+        let admin = new Admin({ email, password: hashedPassword, user_role: roleId ,firstName:firstName,lastName:lastName,createdBy:req.token._id});
         let addUser = await admin.save();
         if (!addUser) {
             return res.status(500).json({
@@ -545,6 +549,80 @@ deleteCustomer: async(req,res)=>{
    return res.status(200).send("Custoner Deleted Successfully");
 } catch (error) {
    return res.status(500).send(error);
+}
+},
+getCount:async(req,res)=>{
+  try {
+    const roles = ['SUPER_ADMIN', 'SUPER_ADMIN_STAFF', 'LABEL', 'LABEL_STAFF'];
+    const userRole = req.token.role.toString().toUpperCase();
+    let labelId
+    if (['LABEL', 'LABEL_STAFF'].includes(userRole)) {
+      if (userRole === 'LABEL') {
+          // Directly use the user's ID if the role is LABEL
+          labelId = req.token._id;
+      } else if (userRole === 'LABEL_STAFF') {
+          // Find the label ID from the createdBy if the role is LABEL_STAFF
+          const labelUser = await Dashboarduser.findById(req.token.createdBy);
+          labelId = labelUser ? labelUser.createdBy : null;  // Ensure that createdBy points to the LABEL's ID
+      }
+  }
+  if(['SUPER_ADMIN', 'SUPER_ADMIN_STAFF',].includes(userRole)){
+     // Count for each model
+     const countAlbums = await Album.countDocuments();
+     const countArtists = await Artist.countDocuments();
+     const countPhotos = await Photo.countDocuments();
+     const countEvents = await Event.countDocuments();
+     const countNews = await News.countDocuments();
+ 
+     // Specific counts for audio and video songs
+     const countAudioSongs = await Song.countDocuments({ song_type: 'audio' });
+     const countVideoSongs = await Song.countDocuments({ song_type: 'video' });
+ 
+     // Sending response with counts
+     res.json({
+         albums: countAlbums,
+         artists: countArtists,
+         songs: {
+             audio: countAudioSongs,
+             video: countVideoSongs,
+             total: countAudioSongs + countVideoSongs
+         },
+         photos: countPhotos,
+         events: countEvents,
+         news: countNews
+     });
+  }else if(['LABEL', 'LABEL_STAFF']){
+
+    // Define a base query that is modified based on the user role
+let query = {};
+
+// Check if labelId is defined, then update the query to filter by label_id
+if (labelId) {
+    query.label_id = labelId;
+}
+   // Count for each model using the potentially modified query
+ // Initialize response object
+ let response = {
+  albums: await Album.countDocuments(query),
+  artists: await Artist.countDocuments(query),
+  photos: await Photo.countDocuments(query),
+  events: await Event.countDocuments(query),
+  news: await News.countDocuments(query),
+  songs: {
+      audio: await Song.countDocuments({ ...query, song_type: 'audio' }),
+      video: await Song.countDocuments({ ...query, song_type: 'video' }),
+      total: 0
+  }
+};
+response.songs.total = response.songs.audio + response.songs.video;
+
+// Sending response with counts
+return res.json(response);
+  }
+   
+} catch (error) {
+    console.error("Failed to fetch stats", error);
+    res.status(500).json({ message: "Failed to fetch statistics" });
 }
 }
 }

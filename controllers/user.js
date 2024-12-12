@@ -95,7 +95,7 @@ login: async (req, res) => {
     }
       const passwordMatched = await bcrypt.compare(password, user.password);
       if (!passwordMatched) {
-          throw generateErrorInstance({ status: 401, success: false,msg: "Invalid Password" });
+          return res.status(401).send({ status: 401, success: false,msg: "Invalid Password" });
       }
       let access_token = await issueToken({
         _id: user._id,

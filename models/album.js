@@ -8,6 +8,11 @@ var albumSchema = new Schema({
         ref: 'Artist',
         required: true
     }],
+    label_id: [{
+        type: Schema.Types.ObjectId,  // Referencing Artist model
+        ref: 'Dashboarduser',
+        required: true
+    }],
     songs_id:[{
         type: Schema.Types.ObjectId,  // Referencing Artist model
         ref: 'Song',

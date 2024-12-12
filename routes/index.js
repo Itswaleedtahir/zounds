@@ -10,6 +10,7 @@ const labelRouter = require("./label");
 const roleRouter = require("./roles");
 const albumRouter = require("./album");
 const newsRouter = require("./news");
+const eventRouter = require("./event");
 
 
 router.use('/v1/users', userRouter);
@@ -20,5 +21,6 @@ router.use('/label', labelRouter);
 router.use('/role', roleRouter);
 router.use('/album', albumRouter);
 router.use('/news', newsRouter);
+router.use('/events', eventRouter);
 
 module.exports = router;

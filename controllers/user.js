@@ -4,6 +4,7 @@ const bcrypt = require("bcryptjs");
 const crypto = require('crypto');
 const Preference = require("../models/preferences")
 const axios = require("axios")
+const jwt = require("jsonwebtoken");
 module.exports = {
   addUser: async (req, res) => {
     try {

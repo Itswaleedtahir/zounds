@@ -24,8 +24,8 @@ module.exports = {
             return res.status(400).json({ message: error.message });
         }
     },
-    updateRole: async(req,res)=>{
-        const { addActions, removeActions } = req.body; // Arrays of action IDs to add or remove
+    updateRole: async(req, res) => {
+        const { permissions } = req.body; // Array of new action IDs to set as the role's permissions
         const { id } = req.params;
     
         try {
@@ -35,18 +35,9 @@ module.exports = {
                 return res.status(404).json({ message: "Role not found" });
             }
     
-            // Handle addition of new actions
-            let updatedActions = roleToUpdate.Permissions.map(id => id.toString());
-            if (addActions && addActions.length > 0) {
-                updatedActions = [...new Set([...updatedActions, ...addActions])]; // Combine and deduplicate
-            }
+            // Assign new permissions array directly, assuming it's already validated and deduplicated
+            roleToUpdate.Permissions = [...new Set(permissions)]; // Ensure uniqueness just in case
     
-            // Handle removal of actions
-            if (removeActions && removeActions.length > 0) {
-                updatedActions = updatedActions.filter(id => !removeActions.includes(id));
-            }
-    
-            roleToUpdate.Permissions = updatedActions;
             await roleToUpdate.save();
     
             return res.status(200).json(roleToUpdate);
@@ -54,6 +45,7 @@ module.exports = {
             return res.status(400).json({ message: error.message });
         }
     },
+    
     deleteRole: async(req,res)=>{
         const { id } = req.params;
 

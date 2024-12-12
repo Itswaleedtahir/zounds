@@ -62,7 +62,9 @@ let methods = {
                 success: false,
             });
         }
+
         let admin = new Admin({ email, password: hashedPassword, user_role: roleId ,firstName:firstName,lastName:lastName,createdBy:req.token._id});
+
         let addUser = await admin.save();
         if (!addUser) {
             return res.status(500).json({

@@ -5,6 +5,11 @@ module.exports = {
         const { role, actions } = req.body; // actions should be an array of action IDs
 
         try {
+             // Check if a role with the same name already exists
+        const existingRole = await Role.findOne({ role: role });
+        if (existingRole) {
+            return res.status(409).json({ message: "Role already exists" }); // 409 Conflict for duplicate resource
+        }
             // Filter to include only unique IDs
             const uniqueActions = [...new Set(actions)];
     

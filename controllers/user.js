@@ -87,7 +87,7 @@ login: async (req, res) => {
   try {
       const { email, password } = req.body;
       if (!email || !password) {
-          throw generateErrorInstance({ status: 400,success:false ,msg: "Required fields can't be empty" });
+          throw generateErrorInstance({success:false ,msg: "Required fields can't be empty" });
       }
       let user = await Users.findOne({ email });
       if (!user) {
@@ -95,7 +95,7 @@ login: async (req, res) => {
     }
       const passwordMatched = await bcrypt.compare(password, user.password);
       if (!passwordMatched) {
-          return res.status(401).send({ status: 401, success: false,msg: "Invalid Password" });
+          return res.status(401).send({ success: false,msg: "Invalid Password" });
       }
       let access_token = await issueToken({
         _id: user._id,

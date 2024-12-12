@@ -2,8 +2,21 @@ const Album = require("../models/album")
 const Song = require("../models/song")
 const Audio = require("../models/audio")
 const Video = require("../models/video")
+const Dashboarduser = require("../models/dashboardUsers")
 module.exports = {
     createAlbum: async(req,res)=>{
+        let label_id
+        const userRole = req.token.role.toString().toUpperCase();
+    if (['LABEL', 'LABEL_STAFF'].includes(userRole)) {
+      if (userRole === 'LABEL') {
+          // Directly use the user's ID if the role is LABEL
+          label_id = req.token._id;
+      } else if (userRole === 'LABEL_STAFF') {
+          // Find the label ID from the createdBy if the role is LABEL_STAFF
+          const labelUser = await Dashboarduser.findById(req.token.createdBy);
+          label_id = labelUser ? labelUser._id : null; // Ensure that createdBy points to the LABEL's ID
+      }
+  }
         const { artist_id, songs_id, title, release_date, cover_image } = req.body;
 
    // Simplified validation checks
@@ -21,7 +34,7 @@ if (!release_date || isNaN(new Date(release_date).getTime())) {
 }
         try {
             const album = new Album({
-                label_id:req.token._id,
+                label_id:label_id,
                 artist_id,
                 songs_id,
                 title,
@@ -36,7 +49,19 @@ if (!release_date || isNaN(new Date(release_date).getTime())) {
     },
     getAlbums: async(req,res)=>{
         try {
-            const albums = await Album.find({})
+            let label_id
+            const userRole = req.token.role.toString().toUpperCase();
+        if (['LABEL', 'LABEL_STAFF'].includes(userRole)) {
+          if (userRole === 'LABEL') {
+              // Directly use the user's ID if the role is LABEL
+              label_id = req.token._id;
+          } else if (userRole === 'LABEL_STAFF') {
+              // Find the label ID from the createdBy if the role is LABEL_STAFF
+              const labelUser = await Dashboarduser.findById(req.token.createdBy);
+              label_id = labelUser ? labelUser._id : null;  // Ensure that createdBy points to the LABEL's ID
+          }
+      }
+            const albums = await Album.find({label_id:label_id})
                 .populate('songs_id')
                 .populate({
                     path: 'artist_id',  // Correctly accessing the array of artist IDs

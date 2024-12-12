@@ -1,5 +1,6 @@
 const Events = require("../models/event")
 const Artist = require("../models/artist")
+const Dashboarduser = require("../models/dashboardUsers")
 module.exports = {
     createEvents : async (req, res) => {
         try {
@@ -20,8 +21,20 @@ module.exports = {
             if (req.token.role === 'LABEL' && !artist_id) {
                 return res.status(400).json({ msg: "Label must provide an Artist ID", success: false });
             }
+            let label_id
+            const userRole = req.token.role.toString().toUpperCase();
+        if (['LABEL', 'LABEL_STAFF'].includes(userRole)) {
+          if (userRole === 'LABEL') {
+              // Directly use the user's ID if the role is LABEL
+              label_id = req.token._id;
+          } else if (userRole === 'LABEL_STAFF') {
+              // Find the label ID from the createdBy if the role is LABEL_STAFF
+              const labelUser = await Dashboarduser.findById(req.token.createdBy);
+              label_id = labelUser ? labelUser._id : null; // Ensure that createdBy points to the LABEL's ID
+          }
+      }
             const eventAdd = new Events({
-                label_id: req.token.role === 'LABEL' ? req.token._id : null,
+                label_id: req.token.role === 'LABEL' || req.token.role==="LABEL_STAFF"? label_id : null,
                 artist_id: artist ? artist._id : req.body.artist_id,  // Use found artist ID or expect it from body for labels
                 title: title,
                 venue: venue,
@@ -48,12 +61,21 @@ module.exports = {
                 }
                 const event = await Events.find({artist_id:artist._id})
                 return res.status(200).send(event)
-            } else if (req.token.role === 'LABEL') {
-               // Assume the label's ID is included in the token after authentication
-        const labelId = req.token._id;
-
+            } else if (req.token.role === 'LABEL' || req.token.role === 'LABEL_STAFF') {
+                let label_id
+            const userRole = req.token.role.toString().toUpperCase();
+        if (['LABEL', 'LABEL_STAFF'].includes(userRole)) {
+          if (userRole === 'LABEL') {
+              // Directly use the user's ID if the role is LABEL
+              label_id = req.token._id;
+          } else if (userRole === 'LABEL_STAFF') {
+              // Find the label ID from the createdBy if the role is LABEL_STAFF
+              const labelUser = await Dashboarduser.findById(req.token.createdBy);
+              label_id = labelUser ? labelUser._id : null;  // Ensure that createdBy points to the LABEL's ID
+          }
+      }
         // Find all artists created by this label
-        const artists = await Artist.find({ label_id: labelId });
+        const artists = await Artist.find({ label_id: label_id });
         if (!artists.length) {
             return res.status(404).json({ msg: "No artists found for this label", success: false });
         }

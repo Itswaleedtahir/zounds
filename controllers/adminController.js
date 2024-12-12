@@ -19,7 +19,6 @@ let methods = {
     try {
         let { email, password, role: roleId,name,bio,image,firstName,lastName } = req.body;
       const label_id= req.token._id
-      console.log("labellll",label_id)
         if (!email || !password || !roleId) {
             return res.status(400).json({
                 msg: "Please provide email, password, and role",
@@ -132,6 +131,7 @@ adminLogin: async(req, res) => {
           _id: admin._id,
           email: admin.email,
           role: admin.user_role.role,
+          createdBy: admin?.createdBy || null,
           permissions: permissions,
           artist: artist?._id || null
       });
@@ -142,6 +142,7 @@ adminLogin: async(req, res) => {
               email: admin.email,
               role: admin.user_role.role,
               permissions: permissions,
+              createdBy: admin.createdBy,
               artist: artist?._id || null
           },
           access_token,

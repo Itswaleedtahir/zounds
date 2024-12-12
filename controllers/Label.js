@@ -11,7 +11,19 @@ const crypto = require('crypto');
 
 let methods = {
     createSong: async(req,res)=>{
-        const label_id = req.token._id
+        // const label_id = req.token._id
+        let label_id
+        const userRole = req.token.role.toString().toUpperCase();
+    if (['LABEL', 'LABEL_STAFF'].includes(userRole)) {
+      if (userRole === 'LABEL') {
+          // Directly use the user's ID if the role is LABEL
+          label_id = req.token._id;
+      } else if (userRole === 'LABEL_STAFF') {
+          // Find the label ID from the createdBy if the role is LABEL_STAFF
+          const labelUser = await Dashboarduser.findById(req.token.createdBy);
+          label_id = labelUser ? labelUser.createdBy : null;  // Ensure that createdBy points to the LABEL's ID
+      }
+  }
         const { genre_id, song_type, mediaFiles } = req.body;
         if(!song_type || !mediaFiles ){
             return res.status(400).json({
@@ -109,9 +121,20 @@ let methods = {
     },
     getAllSongsOfLabel: async (req, res) => {
         try {
-            const userId = req.token._id;
+            let label_id
+            const userRole = req.token.role.toString().toUpperCase();
+        if (['LABEL', 'LABEL_STAFF'].includes(userRole)) {
+          if (userRole === 'LABEL') {
+              // Directly use the user's ID if the role is LABEL
+              label_id = req.token._id;
+          } else if (userRole === 'LABEL_STAFF') {
+              // Find the label ID from the createdBy if the role is LABEL_STAFF
+              const labelUser = await Dashboarduser.findById(req.token.createdBy);
+              label_id = labelUser ? labelUser.createdBy : null;  // Ensure that createdBy points to the LABEL's ID
+          }
+      }
             // Fetch all songs associated with this LABEL
-            const songs = await Song.find({ label_id: userId }).populate('genre_id', 'name');
+            const songs = await Song.find({ label_id: label_id }).populate('genre_id', 'name');
     
             // Use Promise.all to handle multiple asynchronous operations
             const songsWithMedia = await Promise.all(songs.map(async song => {
@@ -141,7 +164,18 @@ let methods = {
         }
     },
     updateSong: async(req,res)=>{
-        const label_id = req.token._id
+        let label_id
+        const userRole = req.token.role.toString().toUpperCase();
+    if (['LABEL', 'LABEL_STAFF'].includes(userRole)) {
+      if (userRole === 'LABEL') {
+          // Directly use the user's ID if the role is LABEL
+          label_id = req.token._id;
+      } else if (userRole === 'LABEL_STAFF') {
+          // Find the label ID from the createdBy if the role is LABEL_STAFF
+          const labelUser = await Dashboarduser.findById(req.token.createdBy);
+          label_id = labelUser ? labelUser.createdBy : null;  // Ensure that createdBy points to the LABEL's ID
+      }
+  }
         const { songId } = req.params;
         const { genre_id, title, song_type, mediaUpdates } = req.body;
         console.log("henre",genre_id)
@@ -199,10 +233,20 @@ let methods = {
         }
     },
     getLabelArtists: async(req,res)=>{
-      const labelId=req.token._id
+      let label_id
+      const userRole = req.token.role.toString().toUpperCase();
+  if (['LABEL', 'LABEL_STAFF'].includes(userRole)) {
+    if (userRole === 'LABEL') {
+        // Directly use the user's ID if the role is LABEL
+        label_id = req.token._id;
+    } else if (userRole === 'LABEL_STAFF') {
+        // Find the label ID from the createdBy if the role is LABEL_STAFF
+        const labelUser = await Dashboarduser.findById(req.token.createdBy);
+        label_id = labelUser ? labelUser.createdBy : null;  // Ensure that createdBy points to the LABEL's ID
+    }
+}
       try {
-        console.log("labe",labelId)
-        const artists = await Artist.find({ label_id: labelId })
+        const artists = await Artist.find({ label_id: label_id })
             .populate('userId')  // Assuming you might also want to populate the Dashboarduser reference in userId
             .populate('label_id', 'name email')  // Optionally, populate only specific fields from the label
             .exec();
@@ -345,7 +389,18 @@ return res.status(200).send(artists)
   },
   createPhoto: async(req,res)=>{
     try {
-      const label_id = req.token._id;
+      let label_id
+      const userRole = req.token.role.toString().toUpperCase();
+  if (['LABEL', 'LABEL_STAFF'].includes(userRole)) {
+    if (userRole === 'LABEL') {
+        // Directly use the user's ID if the role is LABEL
+        label_id = req.token._id;
+    } else if (userRole === 'LABEL_STAFF') {
+        // Find the label ID from the createdBy if the role is LABEL_STAFF
+        const labelUser = await Dashboarduser.findById(req.token.createdBy);
+        label_id = labelUser ? labelUser.createdBy : null;  // Ensure that createdBy points to the LABEL's ID
+    }
+}
       console.log("Label ID:", label_id);
   
       // Check if the incoming data is an array
@@ -373,7 +428,18 @@ return res.status(200).send(artists)
   
   },
   getPhotos: async(req,res)=>{
-    const label_id = req.token._id
+    let label_id
+    const userRole = req.token.role.toString().toUpperCase();
+if (['LABEL', 'LABEL_STAFF'].includes(userRole)) {
+  if (userRole === 'LABEL') {
+      // Directly use the user's ID if the role is LABEL
+      label_id = req.token._id;
+  } else if (userRole === 'LABEL_STAFF') {
+      // Find the label ID from the createdBy if the role is LABEL_STAFF
+      const labelUser = await Dashboarduser.findById(req.token.createdBy);
+      label_id = labelUser ? labelUser.createdBy : null;  // Ensure that createdBy points to the LABEL's ID
+  }
+}
     try {
       const photos = await Photo.find({label_id});
       return res.status(200).json(photos);

@@ -13,7 +13,7 @@ const Action = require("../models/actions")
 let methods = {
   addAdmin: async (req, res) => {
     try {
-        let { email, password, role: roleId,name,bio,image } = req.body;
+        let { email, password, role: roleId,name,bio,image,firstName,lastName } = req.body;
       const label_id= req.token._id
       console.log("labellll",label_id)
         if (!email || !password || !roleId) {
@@ -58,7 +58,7 @@ let methods = {
                 success: false,
             });
         }
-        let admin = new Admin({ email, password: hashedPassword, user_role: roleId });
+        let admin = new Admin({ email, password: hashedPassword, user_role: roleId,firstName:firstName,lastName:lastName });
         let addUser = await admin.save();
         if (!addUser) {
             return res.status(500).json({

@@ -20,6 +20,7 @@ router.get("/getActions", controller.getActions);
 router.get("/getAllLabels",authPolicy ,controller.getAllLabels);
 router.get("/getAllUsers",authPolicy,controller.getAllUsers);
 router.get("/getAllCustomers",authPolicy,controller.getCustomers);
+router.get("/getAllCount",authPolicy,controller.getCount);
 router.post("/changePassword",authPolicy,controller.changePassword);
 router.get("/getAllDataOfLabel/:id",authPolicy,controller.getAllSongsOfLabel);
 router.post("/labelCreate",authPolicy,checkPermission("Labels,Add"),controller.labelCreation)

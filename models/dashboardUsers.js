@@ -15,6 +15,10 @@ var user = new Schema({
         type: String,
         required: true
     },
+    createdBy:{
+         type: Schema.Types.ObjectId, // Assuming references to Artist documents
+        ref: 'Dashboarduser'
+    },
     lastName: {
         type: String,
         default: null

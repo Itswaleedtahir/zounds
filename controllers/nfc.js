@@ -184,8 +184,6 @@ module.exports = {
             }));
     
             const csv = parse(csvData);
-            fs.writeFileSync('./nfcData.csv', csv);
-            console.log('Data has been written to CSV file successfully.');
              // Set headers to prompt download
     res.header('Content-Type', 'text/csv');
     res.header('Content-Disposition', 'attachment; filename=NFCs.csv');

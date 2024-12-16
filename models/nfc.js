@@ -25,6 +25,10 @@ var nfcSchema = new Schema({
    status:{
     type: String
    },
+   mapped:{
+    type:Boolean,
+    default:false
+   },
     createdAt: {
         type: Date,
         default: Date.now

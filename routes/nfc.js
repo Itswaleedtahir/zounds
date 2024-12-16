@@ -9,8 +9,10 @@ const {checkPermission}=require("../utils")
 // Routes
 
 router.post("/createNfc",authPolicy,checkPermission("Manage NFC,Add"),controller.createNfc)
-// router.get("/getAllGenre",authPolicy,checkPermission("Genres,View"),controller.getAllGenre)
-// router.put("/updateGenre/:id",authPolicy,checkPermission("Genres,Update"),controller.updateGenre)
+router.get("/getAllNfc",authPolicy,checkPermission("Manage NFC,View"),controller.getAllNfcs)
+router.get("/getAllNfcOnStatus",authPolicy,checkPermission("Manage NFC,View"),controller.getNfcsOnStatus)
+router.get("/downloadCsv",authPolicy,checkPermission("Manage NFC,View"),controller.downloadCsv)
+router.put("/updateNfc/:id",authPolicy,checkPermission("Genres,Update"),controller.updateNfc)
 // router.delete("/deleteGenre/:id",authPolicy,checkPermission("Genres,Delete"),controller.deleteGenre)
 
 module.exports = router;

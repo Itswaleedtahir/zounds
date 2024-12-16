@@ -53,7 +53,10 @@ module.exports = {
         try {
             const deletedGenre = await Genre.findByIdAndDelete(req.params.id);
             if (!deletedGenre) return res.status(404).send("No genre found with that ID.");
-           return res.status(200).send("Genre Deleted");
+            return res.status(200).json({
+                success: true,
+                msg: "Genre Deleted"
+            });
         } catch (error) {
            return res.status(500).send(error);
         }
@@ -66,9 +69,12 @@ module.exports = {
                 picture: picture
             }, { new: true });
             if (!updatedGenre) return res.status(404).send("No genre found with that ID.");
-            res.status(200).send(updatedGenre);
+            return res.status(200).json({
+                success:true,
+                msg:"Genre updated"
+            })
         } catch (error) {
-            res.status(500).send(error);
+         return  res.status(500).send(error);
         }
     }
 };

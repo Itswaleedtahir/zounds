@@ -11,6 +11,7 @@ const roleRouter = require("./roles");
 const albumRouter = require("./album");
 const newsRouter = require("./news");
 const eventRouter = require("./event");
+const nfcRouter = require("./nfc");
 
 
 router.use('/v1/users', userRouter);
@@ -22,5 +23,6 @@ router.use('/role', roleRouter);
 router.use('/album', albumRouter);
 router.use('/news', newsRouter);
 router.use('/events', eventRouter);
+router.use('/nfc', nfcRouter);
 
 module.exports = router;

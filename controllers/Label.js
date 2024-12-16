@@ -20,8 +20,8 @@ let methods = {
           label_id = req.token._id;
       } else if (userRole === 'LABEL_STAFF') {
           // Find the label ID from the createdBy if the role is LABEL_STAFF
-          const labelUser = await Dashboarduser.findById(req.token.createdBy);
-          label_id = labelUser ? labelUser.createdBy : null;  // Ensure that createdBy points to the LABEL's ID
+          const labelUser = await Admin.findById(req.token.createdBy);
+          label_id = labelUser ? labelUser._id : null;  // Ensure that createdBy points to the LABEL's ID
       }
   }
         const { genre_id, song_type, mediaFiles } = req.body;
@@ -129,8 +129,8 @@ let methods = {
               label_id = req.token._id;
           } else if (userRole === 'LABEL_STAFF') {
               // Find the label ID from the createdBy if the role is LABEL_STAFF
-              const labelUser = await Dashboarduser.findById(req.token.createdBy);
-              label_id = labelUser ? labelUser.createdBy : null;  // Ensure that createdBy points to the LABEL's ID
+              const labelUser = await Admin.findById(req.token.createdBy);
+              label_id = labelUser ? labelUser._id : null;  // Ensure that createdBy points to the LABEL's ID
           }
       }
             // Fetch all songs associated with this LABEL
@@ -172,8 +172,8 @@ let methods = {
           label_id = req.token._id;
       } else if (userRole === 'LABEL_STAFF') {
           // Find the label ID from the createdBy if the role is LABEL_STAFF
-          const labelUser = await Dashboarduser.findById(req.token.createdBy);
-          label_id = labelUser ? labelUser.createdBy : null;  // Ensure that createdBy points to the LABEL's ID
+          const labelUser = await Admin.findById(req.token.createdBy);
+          label_id = labelUser ? labelUser._id : null;  // Ensure that createdBy points to the LABEL's ID
       }
   }
         const { songId } = req.params;
@@ -241,8 +241,8 @@ let methods = {
         label_id = req.token._id;
     } else if (userRole === 'LABEL_STAFF') {
         // Find the label ID from the createdBy if the role is LABEL_STAFF
-        const labelUser = await Dashboarduser.findById(req.token.createdBy);
-        label_id = labelUser ? labelUser.createdBy : null;  // Ensure that createdBy points to the LABEL's ID
+        const labelUser = await Admin.findById(req.token.createdBy);
+        label_id = labelUser ? labelUser._id : null;  // Ensure that createdBy points to the LABEL's ID
     }
 }
       try {
@@ -397,8 +397,8 @@ return res.status(200).send(artists)
         label_id = req.token._id;
     } else if (userRole === 'LABEL_STAFF') {
         // Find the label ID from the createdBy if the role is LABEL_STAFF
-        const labelUser = await Dashboarduser.findById(req.token.createdBy);
-        label_id = labelUser ? labelUser.createdBy : null;  // Ensure that createdBy points to the LABEL's ID
+        const labelUser = await Admin.findById(req.token.createdBy);
+        label_id = labelUser ? labelUser._id : null;  // Ensure that createdBy points to the LABEL's ID
     }
 }
       console.log("Label ID:", label_id);
@@ -436,8 +436,8 @@ if (['LABEL', 'LABEL_STAFF'].includes(userRole)) {
       label_id = req.token._id;
   } else if (userRole === 'LABEL_STAFF') {
       // Find the label ID from the createdBy if the role is LABEL_STAFF
-      const labelUser = await Dashboarduser.findById(req.token.createdBy);
-      label_id = labelUser ? labelUser.createdBy : null;  // Ensure that createdBy points to the LABEL's ID
+      const labelUser = await Admin.findById(req.token.createdBy);
+      label_id = labelUser ? labelUser._id : null;  // Ensure that createdBy points to the LABEL's ID
   }
 }
     try {

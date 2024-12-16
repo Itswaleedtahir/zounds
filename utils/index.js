@@ -3,6 +3,7 @@ const dotenv = require("dotenv");
 const bcrypt = require("bcryptjs");
 const AWS = require("aws-sdk")
 const jwt = require("jsonwebtoken");
+const crypto = require('crypto');
 const secret = process.env.secret
 dotenv.config();
 const transporter = nodemailer.createTransport({
@@ -148,27 +149,27 @@ module.exports = {
     });
   },
   verifyToken: (token, cb) => jwt.verify(token, secret, {}, cb),
-  sendResetPasswordMail: async (email, otp, res) => {
-    try {
-      const info = await transporter.sendMail({
-        from: process.env.BREVO_SENDER,
-        to: email,
-        subject: "Reset your Password",
-        text: "Reset your forgotten Password",
-        html: `<p>Dear User,<br><br>
-        Thank you for registering. Please enter the following OTP to reset your password: <strong>${otp}</strong><br><br>
-        Thank you,<br>
-        The Team</p>`,
-      });
-      console.log("Reset Password Email sent", info.messageId);
-    } catch (error) {
-      console.error("Failed to send email:", error);
-      return res.status(500).json({
-        msg: "Failed to send  email",
-        error: error.message || "Something went wrong."
-      });
-    }
-  },
+  // sendResetPasswordMail: async (email, otp, res) => {
+  //   try {
+  //     const info = await transporter.sendMail({
+  //       from: process.env.BREVO_SENDER,
+  //       to: email,
+  //       subject: "Reset your Password",
+  //       text: "Reset your forgotten Password",
+  //       html: `<p>Dear User,<br><br>
+  //       Thank you for registering. Please enter the following OTP to reset your password: <strong>${otp}</strong><br><br>
+  //       Thank you,<br>
+  //       The Team</p>`,
+  //     });
+  //     console.log("Reset Password Email sent", info.messageId);
+  //   } catch (error) {
+  //     console.error("Failed to send email:", error);
+  //     return res.status(500).json({
+  //       msg: "Failed to send  email",
+  //       error: error.message || "Something went wrong."
+  //     });
+  //   }
+  // },
   sendUserInvite: async (email, password, role,res) => {
     try {
       const info = await transporter.sendMail({
@@ -246,5 +247,13 @@ module.exports = {
 
         next();
     };
+},
+ generateToken:()=>{
+  const randomBytes = crypto.randomBytes(16).toString('hex');
+  const randomNumber = Math.floor(Math.random() * 1000);
+  return `${randomBytes}${randomNumber}`;
+},
+ generateOTP:() =>{
+  return Math.floor(100000 + Math.random() * 900000).toString();
 }
 };

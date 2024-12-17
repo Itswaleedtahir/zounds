@@ -160,4 +160,85 @@ if (!release_date || isNaN(new Date(release_date).getTime())) {
             res.status(500).send({ message: 'Error fetching album', error: error.message });
         }
     },
+    getRecentAlbums: async(req,res)=>{
+            try {
+                // Calculate the time 5 hours ago from now
+                const fiveHoursAgo = new Date(Date.now() - 5 * 60 * 60 * 1000);
+        
+                // Fetch artists created within the last 5 hours
+                const recentArtists = await Album.find({
+                    createdAt: { $gte: fiveHoursAgo }
+                });
+        
+                return res.status(200).json({
+                    success: true,
+                    count: recentArtists.length,
+                    data: recentArtists
+                });
+            } catch (error) {
+                console.error("Error retrieving recent artists:", error);
+                return res.status(500).json({
+                    success: false,
+                    message: error.message || 'Internal server error'
+                });
+            }
+         
+    },
+    getSingleAlbumApp: async (req, res) => {
+        const { albumId } = req.params;
+        try {
+            const album = await Album.findById(albumId)
+            .populate('songs_id')
+            .populate({
+                path: 'artist_id',  // Correctly accessing the array of artist IDs
+                model: 'Artist' ,
+                populate:{
+                    path: 'userId',   // The field in Artist schema that references Dashboarduser
+                    model: 'Dashboarduser' 
+                }    // Explicitly specifying the model might help if the ref is not being recognized
+              })
+    
+            if (!album) {
+                return res.status(404).send({ message: 'No album found with that ID',success:false });
+            }
+    
+            console.log(album);
+    
+            // Extract song IDs from the single album
+            const songIds = album.songs_id.map(song => song._id);
+    
+            // Fetch audio and video details for songs in this album
+            const audios = await Audio.find({ song_id: { $in: songIds } });
+            const videos = await Video.find({ song_id: { $in: songIds } });
+    
+            // Maps to associate song IDs with their respective audio and video
+            const audioMap = audios.reduce((map, audio) => {
+                map[audio.song_id.toString()] = audio;
+                return map;
+            }, {});
+    
+            const videoMap = videos.reduce((map, video) => {
+                map[video.song_id.toString()] = video;
+                return map;
+            }, {});
+    
+            // Enhance the album's songs with audio and video details
+            const enhancedSongs = album.songs_id.map(song => ({
+                ...song._doc,
+                audio: audioMap[song._id.toString()],
+                video: videoMap[song._id.toString()]
+            }));
+    
+            // Return the enhanced album
+            const enhancedAlbum = {
+                ...album._doc,
+                songs_id: enhancedSongs
+            };
+            return res.status(200).json({ Album: enhancedAlbum, success: true });
+            
+        } catch (error) {
+            console.error('Error fetching album:', error);
+         return   res.status(500).send({ message: 'Error fetching album', error: error.message });
+        }
+    },
 }

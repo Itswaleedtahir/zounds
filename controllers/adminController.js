@@ -549,7 +549,7 @@ deleteCustomer: async(req,res)=>{
     if (!deletedUser) {
         return res.status(404).send('User not found.');
     }
-   return res.status(200).send("Custoner Deleted Successfully");
+   return res.status(200).json({message:"Custoner Deleted Successfully"});
 } catch (error) {
    return res.status(500).send(error);
 }

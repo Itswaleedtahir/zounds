@@ -1,4 +1,5 @@
 const NFC = require("../models/nfc")
+const UserAlbum = require("../models/userAlbums")
 const Admin = require("../models/dashboardUsers")
 const {generateOTP,generateToken} = require("../utils/index")
 const { parse } = require('json2csv');
@@ -192,6 +193,50 @@ module.exports = {
         } catch (error) {
             console.error('Failed to export data to CSV:', error);
             return res.status(500).send({ message: 'Failed to export data to CSV:', error: error.message });
+        }
+    },
+    verifyNfc:async(req,res)=>{
+        const { token, code, album_id } = req.body;
+        const userId = req.token._id; // Extract user ID from JWT token passed in the request
+    
+        if (!token || !code || !album_id) {
+            return res.status(400).send({ message: "All fields are required: token, code, and album_id." });
+        }
+    
+        try {
+            const nfcRecord = await NFC.findOne({ token: token });
+            if (!nfcRecord) {
+                return res.status(404).send({ message: "NFC record not found.",status:false });
+            }
+    
+            // Check if NFC is already used
+            if (nfcRecord.mapped) {
+                return res.status(400).send({ message: "This NFC has already been used." ,status:false});
+            }
+    
+            if (nfcRecord.code !== code || nfcRecord.album_id.toString() !== album_id) {
+                return res.status(401).send({ message: "Invalid code or album ID.",status:false });
+            }
+    
+            if (nfcRecord.status !== 'active') {
+                return res.status(400).send({ message: "This NFC is not active.",status:false });
+            }
+    
+            // Update NFC record to marked as mapped
+            nfcRecord.mapped = true;
+            await nfcRecord.save();
+    
+            // Add album to user's collection
+            const userAlbum = await UserAlbum.findOneAndUpdate(
+                { user_id: userId },
+                { $addToSet: { album_id: album_id } },
+                { new: true, upsert: true }
+            );
+    
+           return res.status(200).send({ message: "NFC verified and album added to user's collection.", data: userAlbum });
+        } catch (error) {
+            console.error('Error verifying NFC:', error);
+          return  res.status(500).send({ message: "Error verifying NFC." });
         }
     }
 }

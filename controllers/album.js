@@ -1,6 +1,7 @@
 const Album = require("../models/album")
 const Song = require("../models/song")
 const Audio = require("../models/audio")
+const userAlbum = require("../models/userAlbums")
 const Video = require("../models/video")
 const Dashboarduser = require("../models/dashboardUsers")
 module.exports = {
@@ -189,7 +190,15 @@ if (!release_date || isNaN(new Date(release_date).getTime())) {
     },
     getSingleAlbumApp: async (req, res) => {
         const { albumId } = req.params;
+        const userId = req.token._id
         try {
+            console.log("user",userId)
+           // Check if the user has access to this album
+        // Check if the user has access to this album
+        const userAlbums = await userAlbum.findOne({ user_id: userId });
+        if (!userAlbums || !userAlbums.album_id.includes(albumId)) {
+            return res.status(403).send({ message: 'You have not redeemed this album', success: false });
+        }
             const album = await Album.findById(albumId)
             .populate('songs_id')
             .populate('label_id')

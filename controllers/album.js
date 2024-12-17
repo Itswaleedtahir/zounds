@@ -63,6 +63,7 @@ if (!release_date || isNaN(new Date(release_date).getTime())) {
       }
             const albums = await Album.find({label_id:label_id})
                 .populate('songs_id')
+                .populate('label_id')
                 .populate({
                     path: 'artist_id',  // Correctly accessing the array of artist IDs
                     model: 'Artist' ,

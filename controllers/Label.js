@@ -233,22 +233,27 @@ let methods = {
         }
     },
     getLabelArtists: async(req,res)=>{
-      let label_id
-      const userRole = req.token.role.toString().toUpperCase();
-  if (['LABEL', 'LABEL_STAFF'].includes(userRole)) {
-    if (userRole === 'LABEL') {
-        // Directly use the user's ID if the role is LABEL
-        label_id = req.token._id;
-    } else if (userRole === 'LABEL_STAFF') {
-        // Find the label ID from the createdBy if the role is LABEL_STAFF
-        const labelUser = await Admin.findById(req.token.createdBy);
-        label_id = labelUser ? labelUser._id : null;  // Ensure that createdBy points to the LABEL's ID
-    }
-}
+        const userRole = req.token.role.toString().toUpperCase();
+        const userId = req.token._id; // User's ID from the token
+        const createdBy = req.token.createdBy; // For LABEL_STAFF to find their label
+            let query = {};
+            if (userRole === 'SUPER_ADMIN') {
+                // SUPER_ADMIN can see all NFC records
+                query = {};
+            } else if (userRole === 'LABEL') {
+                // LABEL can only see their own NFC records
+                query = { label_id: userId };
+            } else if (userRole === 'LABEL_STAFF') {
+                // LABEL_STAFF can see NFC records for their label
+                // Assuming `createdBy` field in token stores the LABEL's user ID
+                query = { label_id: createdBy };
+            } else {
+                return res.status(403).send({ message: 'Unauthorized access' });
+            }
       try {
-        const artists = await Artist.find({ label_id: label_id })
+        const artists = await Artist.find(query)
             .populate('userId')  // Assuming you might also want to populate the Dashboarduser reference in userId
-            .populate('label_id', 'name email')  // Optionally, populate only specific fields from the label
+            .populate('label_id')  // Optionally, populate only specific fields from the label
             .exec();
 return res.status(200).send(artists)
     } catch (error) {

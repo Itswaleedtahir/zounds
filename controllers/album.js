@@ -17,7 +17,7 @@ module.exports = {
           label_id = labelUser ? labelUser._id : null; // Ensure that createdBy points to the LABEL's ID
       }
   }
-        const { artist_id, songs_id, title, release_date, cover_image } = req.body;
+        const { artist_id, songs_id, title, release_date, cover_image,photos_id } = req.body;
 
    // Simplified validation checks
    if (!Array.isArray(artist_id)) {
@@ -39,6 +39,7 @@ if (!release_date || isNaN(new Date(release_date).getTime())) {
                 songs_id,
                 title,
                 release_date,
+                photos_id:photos_id || null,
                 cover_image: cover_image || null
             });
             await album.save();
@@ -108,6 +109,8 @@ if (!release_date || isNaN(new Date(release_date).getTime())) {
         try {
             const album = await Album.findById(albumId)
             .populate('songs_id')
+            .populate('label_id')
+            .populate('photos_id')
             .populate({
                 path: 'artist_id',  // Correctly accessing the array of artist IDs
                 model: 'Artist' ,
@@ -189,6 +192,8 @@ if (!release_date || isNaN(new Date(release_date).getTime())) {
         try {
             const album = await Album.findById(albumId)
             .populate('songs_id')
+            .populate('label_id')
+            .populate('photos_id')
             .populate({
                 path: 'artist_id',  // Correctly accessing the array of artist IDs
                 model: 'Artist' ,

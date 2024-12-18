@@ -12,9 +12,11 @@ const albumRouter = require("./album");
 const newsRouter = require("./news");
 const eventRouter = require("./event");
 const nfcRouter = require("./nfc");
+const playlistRouter = require("./playlist");
 
 
 router.use('/v1/users', userRouter);
+router.use('/v1/playlist', playlistRouter);
 router.use('/artists', artistRouter);
 router.use('/genre', genreRouter);
 router.use('/admin', adminRouter);

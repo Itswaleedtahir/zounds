@@ -5,6 +5,16 @@ const crypto = require('crypto');
 const Preference = require("../models/preferences")
 const axios = require("axios")
 const jwt = require("jsonwebtoken");
+const preferences = require("../models/preferences");
+const DownloadArtist = require("../models/downloadArtist");
+const News = require("../models/news");
+const Event = require("../models/event");
+const Artist = require("../models/artist");
+const UserAlbum = require("../models/userAlbums");
+const Album = require("../models/album");
+const Song = require("../models/song")
+const Audio = require("../models/audio")
+const Video = require("../models/video")
 module.exports = {
   addUser: async (req, res) => {
     try {
@@ -409,4 +419,167 @@ googleVerify:async(req,res)=>{
       return res.status(500).send({ message: 'Error', error: error.message });
     }
   },
+  userArtists:async(req,res)=>{
+    try {
+      const userId = req.token._id
+      // Fetch the preference document for the given user ID
+      const preference = await preferences.findOne({ user_id: userId }).populate('artistsSelected').exec();
+      
+      if (!preference) {
+          console.log('No preferences found for this user.');
+          return res.status(400).json({success: false, message: "No preference found"})
+      }
+
+      // Return the list of artists selected by the user
+      return res.status(200).json({success:true , data: preference})
+  } catch (error) {
+    console.error('Server error:', error);
+    return res.status(500).json({message:'Internal server error',success:false});
+  }
+  },
+  downloadArtist:async(req,res)=>{
+    const {  artist_id } = req.body;
+    try {
+      const user_id = req.token._id
+        const downloadArtist = new DownloadArtist({ user_id, artist_id });
+        await downloadArtist.save();
+        return res.status(201).json({message:"Artist downloaded successfully",message:true});
+    } catch (error) {
+      console.error('Server error:', error);
+      return res.status(500).json({message:'Internal server error',success:false});
+    }
+  },
+  getSingleDownloadArtist: async(req,res)=>{
+    const userId = req.token._id
+    const {artistId } = req.params;
+
+    try {
+       // Fetch the artist details
+       const artist = await Artist.findById(artistId);
+       if (!artist) {
+           return res.status(404).send({ message: 'Artist not found.' });
+       }
+       console.log("Artist",artist)
+        const downloadArtist = await DownloadArtist.findOne({artist_id:artistId})
+        console.log("artist",downloadArtist)
+        // First, check the user's preference
+        const preference = await preferences.findOne({ user_id: userId, artistsSelected: artistId });
+      console.log("prefernece",preference)
+        if (!preference) {
+            return res.status(404).send({ message: 'User preference not found.' });
+        }
+
+         // Check the type of content the user prefers for this artist
+         const contentTypes = preference.artistContent;  // Assuming it can be an array of types like ['News', 'Events']
+
+         const results = {};
+         if (contentTypes.includes('News')) {
+             const news = await News.find({ artist_id: artistId });
+             if (news) results.news = news;
+         }
+ 
+         if (contentTypes.includes('Event')) {
+             const event = await Event.find({ artist_id: artistId });
+             if (event) results.events = event;
+         }
+ 
+         if (Object.keys(results).length === 0) {
+             return res.status(404).send({ message: 'No content found for this artist according to user preferences.' });
+         }
+ 
+        // Combine artist details with content results
+       const artistDetails = {
+        ...artist.toObject(),
+        news: results.news || [],
+        events: results.events || []
+    };
+
+    return res.status(200).json({artist:artistDetails, success:true, message:"Artist Details"});
+    } catch (error) {
+      console.error('Server error:', error);
+      return res.status(500).json({message:'Internal server error',success:false});
+    }
+  },
+  getAlbumsOfUserRedeemed:async(req,res)=>{
+    const userId = req.token._id;
+
+    try {
+        const redeemedAlbums = await UserAlbum.find({
+            user_id: userId,
+        }).populate('album_id');
+
+        if (!redeemedAlbums || redeemedAlbums.length === 0) {
+            return res.status(404).send({ message: 'No redeemed albums found for this user.' , success:false});
+        }
+
+        return res.status(200).json({albums:redeemedAlbums, success:true});
+    } catch (error) {
+        console.error('Server error:', error);
+       return res.status(500).json({message:'Internal server error',success:false});
+    }
+  },
+  getRedeemedAlbums: async(req,res)=>{
+    const { albumId } = req.params;
+            const userId = req.token._id
+            try {
+                console.log("user",userId)
+               // Check if the user has access to this album
+            // Check if the user has access to this album
+            const userAlbums = await UserAlbum.findOne({ user_id: userId });
+                const album = await Album.findById(albumId)
+                .populate('songs_id')
+                .populate('label_id')
+                .populate('photos_id')
+                .populate({
+                    path: 'artist_id',  // Correctly accessing the array of artist IDs
+                    model: 'Artist' ,
+                    populate:{
+                        path: 'userId',   // The field in Artist schema that references Dashboarduser
+                        model: 'Dashboarduser' 
+                    }    // Explicitly specifying the model might help if the ref is not being recognized
+                  })
+        
+                if (!album) {
+                    return res.status(404).send({ message: 'No album found with that ID',success:false });
+                }
+        
+                console.log(album);
+        
+                // Extract song IDs from the single album
+                const songIds = album.songs_id.map(song => song._id);
+        
+                // Fetch audio and video details for songs in this album
+                const audios = await Audio.find({ song_id: { $in: songIds } });
+                const videos = await Video.find({ song_id: { $in: songIds } });
+        
+                // Maps to associate song IDs with their respective audio and video
+                const audioMap = audios.reduce((map, audio) => {
+                    map[audio.song_id.toString()] = audio;
+                    return map;
+                }, {});
+        
+                const videoMap = videos.reduce((map, video) => {
+                    map[video.song_id.toString()] = video;
+                    return map;
+                }, {});
+        
+                // Enhance the album's songs with audio and video details
+                const enhancedSongs = album.songs_id.map(song => ({
+                    ...song._doc,
+                    audio: audioMap[song._id.toString()],
+                    video: videoMap[song._id.toString()]
+                }));
+        
+                // Return the enhanced album
+                const enhancedAlbum = {
+                    ...album._doc,
+                    songs_id: enhancedSongs
+                };
+                return res.status(200).json({ Album: enhancedAlbum, success: true });
+                
+            } catch (error) {
+                console.error('Error fetching album:', error);
+             return   res.status(500).send({ message: 'Error fetching album', error: error.message });
+            }
+  }
 };

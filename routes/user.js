@@ -19,5 +19,10 @@ router.post("/createPreferences",authPolicy ,controller.userPrefrences);
 router.post("/uplaodFile", controller.fileUploadS3);
 router.post("/googleLogin",controller.googleVerify)
 router.post("/appleLogin",controller.appleLogin)
+router.get("/getPreference",authPolicy,controller.userArtists)
+router.get("/getRedeemAlbums",authPolicy,controller.getAlbumsOfUserRedeemed)
+router.post("/downloadArtist",authPolicy,controller.downloadArtist)
+router.get("/getDownloadArtist/:artistId",authPolicy,controller.getSingleDownloadArtist)
+router.get("/getRedeemedAlbum/:albumId",authPolicy,controller.getRedeemedAlbums)
 
 module.exports = router;

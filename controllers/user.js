@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const Preference = require("../models/preferences")
 const axios = require("axios")
 const jwt = require("jsonwebtoken");
+const Genre = require("../models/genre");
 const preferences = require("../models/preferences");
 const DownloadArtist = require("../models/downloadArtist");
 const News = require("../models/news");
@@ -581,5 +582,30 @@ googleVerify:async(req,res)=>{
                 console.error('Error fetching album:', error);
              return   res.status(500).send({ message: 'Error fetching album', error: error.message });
             }
+  },
+  getAllArtists: async(req,res)=>{
+    try {
+      const artists = await Artist.find({});
+      return res.status(201).json({artists: artists,success:true});
+  } catch (error) {
+    console.error('Error fetching album:', error);
+    return   res.status(500).send({ message: 'Error fetching album', error: error.message });
   }
+  },
+      getAllGenre: async(req,res)=>{
+          try {
+              const genres = await Genre.find({});
+              return res.status(200).json({
+                  success: true,
+                  count: genres.length,
+                  data: genres
+              });
+          } catch (error) {
+              console.error("Error retrieving genres:", error);
+              return res.status(500).json({
+                  success: false,
+                  message: error.message || 'Internal server error'
+              });
+          }
+      },
 };

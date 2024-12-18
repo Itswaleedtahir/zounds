@@ -13,10 +13,12 @@ const newsRouter = require("./news");
 const eventRouter = require("./event");
 const nfcRouter = require("./nfc");
 const playlistRouter = require("./playlist");
+const likeSongRouter = require("./likedSongs");
 
 
 router.use('/v1/users', userRouter);
 router.use('/v1/playlist', playlistRouter);
+router.use('/v1/like', likeSongRouter);
 router.use('/artists', artistRouter);
 router.use('/genre', genreRouter);
 router.use('/admin', adminRouter);

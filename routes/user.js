@@ -24,7 +24,8 @@ router.get("/getRedeemAlbums",authPolicy,controller.getAlbumsOfUserRedeemed)
 router.get("/getAllArtists",authPolicy,controller.getAllArtists)
 router.get("/getAllGenres",authPolicy,controller.getAllGenre)
 router.post("/downloadArtist",authPolicy,controller.downloadArtist)
-router.get("/getDownloadArtist/:artistId",authPolicy,controller.getSingleDownloadArtist)
+router.get("/getDownloadArtists",authPolicy,controller.getDownloadedArtists)
+router.get("/getSingleArtist/:artistId",authPolicy,controller.getSingleDownloadArtist)
 router.get("/getRedeemedAlbum/:albumId",authPolicy,controller.getRedeemedAlbums)
 
 module.exports = router;

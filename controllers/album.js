@@ -190,38 +190,32 @@ if (!release_date || isNaN(new Date(release_date).getTime())) {
     },
     getSingleAlbumApp: async (req, res) => {
         const { albumId } = req.params;
-        const userId = req.token._id
+        const userId = req.token._id;
+    
         try {
-            console.log("user",userId)
-           // Check if the user has access to this album
-        // Check if the user has access to this album
-        const userAlbums = await userAlbum.findOne({ user_id: userId });
-        if (!userAlbums || !userAlbums.album_id.includes(albumId)) {
-            return res.status(403).send({ message: 'You have not redeemed this album', success: false });
-        }
+            console.log("user", userId);
+            const userAlbums = await userAlbum.findOne({ user_id: userId });
             const album = await Album.findById(albumId)
-            .populate('songs_id')
-            .populate('label_id')
-            .populate('photos_id')
-            .populate({
-                path: 'artist_id',  // Correctly accessing the array of artist IDs
-                model: 'Artist' ,
-                populate:{
-                    path: 'userId',   // The field in Artist schema that references Dashboarduser
-                    model: 'Dashboarduser' 
-                }    // Explicitly specifying the model might help if the ref is not being recognized
-              })
+                .populate('songs_id')
+                .populate('label_id')
+                .populate('photos_id')
+                .populate({
+                    path: 'artist_id',
+                    model: 'Artist',
+                    populate: {
+                        path: 'userId',
+                        model: 'Dashboarduser'
+                    }
+                });
     
             if (!album) {
-                return res.status(404).send({ message: 'No album found with that ID',success:false });
+                return res.status(404).send({ message: 'No album found with that ID', success: false });
             }
     
             console.log(album);
     
-            // Extract song IDs from the single album
-            const songIds = album.songs_id.map(song => song._id);
-    
             // Fetch audio and video details for songs in this album
+            const songIds = album.songs_id.map(song => song._id);
             const audios = await Audio.find({ song_id: { $in: songIds } });
             const videos = await Video.find({ song_id: { $in: songIds } });
     
@@ -236,23 +230,37 @@ if (!release_date || isNaN(new Date(release_date).getTime())) {
                 return map;
             }, {});
     
-            // Enhance the album's songs with audio and video details
-            const enhancedSongs = album.songs_id.map(song => ({
-                ...song._doc,
-                audio: audioMap[song._id.toString()],
-                video: videoMap[song._id.toString()]
-            }));
+            // Check if the album is in the user's redeemed albums
+            const isRedeemed = userAlbums && userAlbums.album_id && userAlbums.album_id.includes(albumId);
+            console.log("Is redeemed:", isRedeemed || false);  // Log the redemption status
     
-            // Return the enhanced album
+            // Enhance the album's songs based on redemption status
+            const enhancedSongs = album.songs_id.map(song => {
+                if (isRedeemed) {
+                    // Include full details if redeemed
+                    return {
+                        ...song._doc,
+                        audio: audioMap[song._id.toString()],
+                        video: videoMap[song._id.toString()]
+                    };
+                } else {
+                    return{
+                    ...song._doc
+                    }
+                }
+            });
+            console.log("redeemed",isRedeemed)
+            // Return the enhanced album with appropriate song details
             const enhancedAlbum = {
                 ...album._doc,
-                songs_id: enhancedSongs
+                songs_id: enhancedSongs,
             };
-            return res.status(200).json({ Album: enhancedAlbum, success: true });
-            
+    
+            return res.status(200).json({ Album: enhancedAlbum, success: true, redeemed: isRedeemed  });
+    
         } catch (error) {
             console.error('Error fetching album:', error);
-         return   res.status(500).send({ message: 'Error fetching album', error: error.message });
+            return res.status(500).send({ message: 'Error fetching album', error: error.message });
         }
     },
     getAllRedeemedAlbums:async(req,res)=>{

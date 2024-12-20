@@ -3,7 +3,6 @@ const router = Router();
 
 // Routers
 const userRouter = require("./user");
-const artistRouter = require("./artist");
 const genreRouter = require("./genre");
 const adminRouter = require("./admin");
 const labelRouter = require("./label");
@@ -19,7 +18,6 @@ const likeSongRouter = require("./likedSongs");
 router.use('/v1/users', userRouter);
 router.use('/v1/playlist', playlistRouter);
 router.use('/v1/like', likeSongRouter);
-router.use('/artists', artistRouter);
 router.use('/genre', genreRouter);
 router.use('/admin', adminRouter);
 router.use('/label', labelRouter);

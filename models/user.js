@@ -49,6 +49,10 @@ var userSchema = new Schema({
         type: String,
         default: null
     },
+    preferencesSet:{
+        type:Boolean,
+        default:false
+    },
     createdAt: {
         type: Date,
         default: Date.now

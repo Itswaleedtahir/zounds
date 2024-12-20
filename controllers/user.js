@@ -249,7 +249,8 @@ userPrefrences: async(req,res)=>{
         $set: {
             gender,
             dob,
-            zipcode
+            zipcode,
+            preferencesSet:true
         }
     }, { new: true, runValidators: true }); // Option "new: true" returns the updated document
 
@@ -357,10 +358,19 @@ googleVerify:async(req,res)=>{
       return res.status(500).send({ message: 'Error', error: error.message });
     }
   },
+  
   appleLogin:async(req,res)=>{
+    // Function to fetch Apple's public key
+async function fetchApplePublicKey() {
+  const url = 'https://appleid.apple.com/auth/keys'; // Apple's public key URL
+  const response = await axios.get(url);
+  // Further implementation needed to convert the key to a format usable by jwt.verify()
+  return response.data.keys[0]; // Simplified, depends on key selection logic
+}
     try {
       const { idToken, appleId ,first_name,last_name} = req.body;
-      const userData = jwt.decode(idToken)
+      console.log("token",idToken)
+      const userData =jwt.decode(idToken)
       console.log("userData",userData)
       const email =
       idToken === null
@@ -450,57 +460,77 @@ googleVerify:async(req,res)=>{
       return res.status(500).json({message:'Internal server error',success:false});
     }
   },
-  getSingleDownloadArtist: async(req,res)=>{
-    const userId = req.token._id
-    const {artistId } = req.params;
+  getDownloadedArtists: async(req,res)=>{
+    try {
+      const  userId  = req.token._id;
+      const downloadArtists = await DownloadArtist.find({ user_id: userId })
+          .populate('artist_id')  // assuming you want to populate details of artists
+          .exec();
+
+    return  res.status(200).json({
+          success: true,
+          data: downloadArtists
+      });
+  } catch (error) {
+      res.status(500).json({
+          success: false,
+          message: 'Server error: ' + error.message
+      });
+  }
+  },
+  getSingleDownloadArtist: async(req, res) => {
+    const userId = req.token._id;
+    const { artistId } = req.params;
 
     try {
-       // Fetch the artist details
-       const artist = await Artist.findById(artistId);
-       if (!artist) {
-           return res.status(404).send({ message: 'Artist not found.' });
-       }
-       console.log("Artist",artist)
-        const downloadArtist = await DownloadArtist.findOne({artist_id:artistId})
-        console.log("artist",downloadArtist)
-        // First, check the user's preference
+        // Fetch the artist details
+        const artist = await Artist.findById(artistId);
+        if (!artist) {
+            return res.status(404).send({ message: 'Artist not found.' });
+        }
+        console.log("Artist:", artist);
+
+        // Fetch albums associated with the artist
+        const albums = await Album.find({ artist_id: artistId });
+        console.log("Albums:", albums);
+
+        // Fetch artist preferences for the user or use default
         const preference = await preferences.findOne({ user_id: userId, artistsSelected: artistId });
-      console.log("prefernece",preference)
-        if (!preference) {
-            return res.status(404).send({ message: 'User preference not found.' });
+        console.log("Preference:", preference);
+
+        const contentTypes = preference ? preference.artistContent : ['News', 'Event']; // Default to all if no preference
+        console.log("Content Types:", contentTypes);
+
+        const results = {};
+        if (contentTypes.includes('News') || contentTypes.length === 0) {
+            const news = await News.find({ artist_id: artistId });
+            results.news = news;
         }
 
-         // Check the type of content the user prefers for this artist
-         const contentTypes = preference.artistContent;  // Assuming it can be an array of types like ['News', 'Events']
+        if (contentTypes.includes('Event') || contentTypes.length === 0) {
+            const event = await Event.find({ artist_id: artistId });
+            results.events = event;
+        }
 
-         const results = {};
-         if (contentTypes.includes('News')) {
-             const news = await News.find({ artist_id: artistId });
-             if (news) results.news = news;
-         }
- 
-         if (contentTypes.includes('Event')) {
-             const event = await Event.find({ artist_id: artistId });
-             if (event) results.events = event;
-         }
- 
-         if (Object.keys(results).length === 0) {
-             return res.status(404).send({ message: 'No content found for this artist according to user preferences.' });
-         }
- 
-        // Combine artist details with content results
-       const artistDetails = {
-        ...artist.toObject(),
-        news: results.news || [],
-        events: results.events || []
-    };
+        if (Object.keys(results).length === 0) {
+            return res.status(404).send({ message: 'No content found for this artist according to user preferences or defaults.' });
+        }
 
-    return res.status(200).json({artist:artistDetails, success:true, message:"Artist Details"});
+        // Combine artist details with albums and other content results
+        const artistDetails = {
+            ...artist.toObject(),
+            albums: albums,  // Include the albums in the response
+            news: results.news || [],
+            events: results.events || []
+        };
+
+        return res.status(200).json({ artist: artistDetails, success: true, message: "Artist Details" });
     } catch (error) {
-      console.error('Server error:', error);
-      return res.status(500).json({message:'Internal server error',success:false});
+        console.error('Server error:', error);
+        return res.status(500).json({ message: 'Internal server error', success: false });
     }
-  },
+},
+
   getAlbumsOfUserRedeemed:async(req,res)=>{
     const userId = req.token._id;
 

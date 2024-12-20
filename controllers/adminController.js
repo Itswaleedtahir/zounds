@@ -428,10 +428,15 @@ adminLogin: async(req, res) => {
   },
   getAllLabels: async(req,res)=>{
     try {
-      const labelUsers = await Admin.find({ user_role: 'LABEL' });
-     return res.status(200).send(labelUsers);
-  } catch (error) {
-     return res.status(500).send(error);
+      const role = await Role.findOne({ role: 'LABEL' });
+      if (!role) {
+          return res.status(404).json({ message: 'Role not found' });
+      }
+
+      const users = await Admin.find({ user_role: role._id }).populate('user_role');
+    return  res.json(users);
+  } catch (err) {
+      return res.status(500).json({ message: 'Server error', error: err });
   }
   },
   getAllSongsOfLabel: async (req, res) => {

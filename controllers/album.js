@@ -255,4 +255,23 @@ if (!release_date || isNaN(new Date(release_date).getTime())) {
          return   res.status(500).send({ message: 'Error fetching album', error: error.message });
         }
     },
+    getAllRedeemedAlbums:async(req,res)=>{
+        const  userId  = req.token._id;
+
+    try {
+        // Find all userAlbum documents for the given user ID and populate the album details
+        const userAlbums = await userAlbum.find({ user_id: userId }).populate("album_id")
+            .populate('album_id'); // Populate the details of each album
+
+        if (userAlbums.length === 0) {
+            return res.status(404).json({ message: 'No albums found for this user', success: false });
+        }
+
+        return res.status(200).json({ albums: userAlbums, success: true });
+    } catch (error) {
+        console.error('Error fetching albums for user:', error);
+        res.status(500).json({ message: 'Failed to fetch albums', error: error.message || 'Something went wrong.', success: false });
+    }
+
+    }
 }

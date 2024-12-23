@@ -9,6 +9,7 @@ const Event = require("../models/event")
 const News = require("../models/news")
 const Photo = require("../models/photo")
 const Album = require("../models/album")
+const NFC = require("../models/nfc")
 let bcrypt = require("bcrypt");
 const crypto = require('crypto');
 let utils = require("../utils/index");
@@ -581,7 +582,7 @@ getCount:async(req,res)=>{
      const countPhotos = await Photo.countDocuments();
      const countEvents = await Event.countDocuments();
      const countNews = await News.countDocuments();
- 
+    const countNfc = await NFC.countDocuments()
      // Specific counts for audio and video songs
      const countAudioSongs = await Song.countDocuments({ song_type: 'audio' });
      const countVideoSongs = await Song.countDocuments({ song_type: 'video' });
@@ -597,7 +598,8 @@ getCount:async(req,res)=>{
          },
          photos: countPhotos,
          events: countEvents,
-         news: countNews
+         news: countNews,
+         nfcs: countNfc
      });
   }else if(['LABEL', 'LABEL_STAFF']){
 
@@ -620,7 +622,8 @@ if (labelId) {
       audio: await Song.countDocuments({ ...query, song_type: 'audio' }),
       video: await Song.countDocuments({ ...query, song_type: 'video' }),
       total: 0
-  }
+  },
+  nfcs: await NFC.countDocuments(query)
 };
 response.songs.total = response.songs.audio + response.songs.video;
 
@@ -654,7 +657,8 @@ if (labelId) {
       audio: await Song.countDocuments({ ...query, song_type: 'audio' }),
       video: await Song.countDocuments({ ...query, song_type: 'video' }),
       total: 0
-  }
+  },
+  nfcs: await NFC.countDocuments(query)
 };
 response.songs.total = response.songs.audio + response.songs.video;
 

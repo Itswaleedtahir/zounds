@@ -630,8 +630,40 @@ return res.json(response);
    
 } catch (error) {
     console.error("Failed to fetch stats", error);
-    res.status(500).json({ message: "Failed to fetch statistics" });
+    return res.status(500).json({ message: "Failed to fetch statistics" });
 }
+},
+getSingleLableCount:async(req,res)=>{
+  try {
+      const labelId = req.params.id
+      let query = {};
+
+// Check if labelId is defined, then update the query to filter by label_id
+if (labelId) {
+    query.label_id = labelId;
+}
+         // Count for each model using the potentially modified query
+ // Initialize response object
+ let response = {
+  albums: await Album.countDocuments(query),
+  artists: await Artist.countDocuments(query),
+  photos: await Photo.countDocuments(query),
+  events: await Event.countDocuments(query),
+  news: await News.countDocuments(query),
+  songs: {
+      audio: await Song.countDocuments({ ...query, song_type: 'audio' }),
+      video: await Song.countDocuments({ ...query, song_type: 'video' }),
+      total: 0
+  }
+};
+response.songs.total = response.songs.audio + response.songs.video;
+
+// Sending response with counts
+return res.json(response);
+  } catch (error) {
+    console.error("Failed to fetch stats", error);
+    return res.status(500).json({ message: "Failed to fetch statistics" });
+  }
 }
 }
 module.exports = methods;

@@ -23,6 +23,7 @@ router.get("/getAllCustomers",authPolicy,controller.getCustomers);
 router.get("/getAllCount",authPolicy,controller.getCount);
 router.post("/changePassword",authPolicy,controller.changePassword);
 router.get("/getAllDataOfLabel/:id",authPolicy,controller.getAllSongsOfLabel);
+router.get("/getSingleLabelCount/:id",authPolicy,controller.getSingleLableCount);
 router.post("/labelCreate",authPolicy,checkPermission("Labels,Add"),controller.labelCreation)
 router.put("/updateCustomer/:id",authPolicy,controller.updateCustomers);
 router.delete("/deleteCustomer/:id",authPolicy,controller.deleteCustomer);

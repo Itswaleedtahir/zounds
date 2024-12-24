@@ -14,6 +14,7 @@ const Artist = require("../models/artist");
 const UserAlbum = require("../models/userAlbums");
 const Album = require("../models/album");
 const Song = require("../models/song")
+const Shop = require("../models/shop")
 const Audio = require("../models/audio")
 const Video = require("../models/video")
 module.exports = {
@@ -511,6 +512,10 @@ async function fetchApplePublicKey() {
             const event = await Event.find({ artist_id: artistId });
             results.events = event;
         }
+        if (contentTypes.includes('Collectable items') || contentTypes.length === 0) {
+          const shop = await Shop.find({ artist_id: artistId });
+          results.shop = shop;
+      }
 
         if (Object.keys(results).length === 0) {
             return res.status(404).send({ message: 'No content found for this artist according to user preferences or defaults.' });
@@ -521,7 +526,8 @@ async function fetchApplePublicKey() {
             ...artist.toObject(),
             albums: albums,  // Include the albums in the response
             news: results.news || [],
-            events: results.events || []
+            events: results.events || [],
+            shop: results.shop || []
         };
 
         return res.status(200).json({ artist: artistDetails, success: true, message: "Artist Details" });

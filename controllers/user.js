@@ -499,7 +499,7 @@ async function fetchApplePublicKey() {
         const preference = await preferences.findOne({ user_id: userId, artistsSelected: artistId });
         console.log("Preference:", preference);
 
-        const contentTypes = preference ? preference.artistContent : ['News', 'Event']; // Default to all if no preference
+        const contentTypes = preference ? preference.artistContent : ['News', 'Event', 'Collectable items']; // Default to all if no preference
         console.log("Content Types:", contentTypes);
 
         const results = {};

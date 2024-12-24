@@ -2,7 +2,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-var likeSongSchema = new Schema({
+var listenSongsSchema = new Schema({
     user_id: {
         type: Schema.Types.ObjectId,
         ref: 'User',
@@ -12,10 +12,11 @@ var likeSongSchema = new Schema({
         type: Schema.Types.ObjectId, // Assuming references to Genre documents
         ref: 'Song'
     },
-    album_id:{
-         type: Schema.Types.ObjectId, // Assuming references to Genre documents
+    album_id: {
+        type: Schema.Types.ObjectId, // Assuming references to Genre documents
         ref: 'Album'
     },
+    playedAt:{ type: Date, default: Date.now },
     createdAt: {
         type: Date,
         default: Date.now
@@ -26,4 +27,4 @@ var likeSongSchema = new Schema({
     }
 }, { timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' } });
 
-module.exports = mongoose.model('likeSong', likeSongSchema);
+module.exports = mongoose.model('songHistory', listenSongsSchema);

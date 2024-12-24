@@ -8,15 +8,16 @@ module.exports={
     likeSong: async(req,res)=>{
         const userId = req.token._id
         try {
-            if (!req.body.song_id) {
+            if (!req.body.song_id || !req.body.album_id) {
                 return res.status(400).json({
-                    msg: "Please provide a song",
+                    msg: "Please provide a song and album",
                     success: false,
                 });
             }
             const userAlbum = new LikedSongs({
                 user_id: userId,
-                song_id: req.body.song_id
+                song_id: req.body.song_id,
+                album_id:req.body.album_id
             });
             
             const savedUserAlbum = await userAlbum.save();
@@ -62,6 +63,7 @@ module.exports={
             // Enhance the songs with audio and video details
         const enhancedSongs = userSongs.map(song => ({
             ...song._doc,
+            albumid:song.album_id,
             audio: audioMap[song.song_id.toString()],
             video: videoMap[song.song_id.toString()]
         }));

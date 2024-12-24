@@ -8,9 +8,17 @@ var playlistSchema = new Schema({
         ref: 'User',
         required: true
     },
-    song_id: [{
-        type: Schema.Types.ObjectId, // Assuming references to Genre documents
-        ref: 'Song'
+    songs: [{
+        songId: {
+            type: Schema.Types.ObjectId,
+            ref: 'Song',
+            required: true
+        },
+        albumId: {
+            type: Schema.Types.ObjectId,
+            ref: 'Album',
+            required: true
+        }
     }],
     title:{
         type:String

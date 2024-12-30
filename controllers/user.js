@@ -409,7 +409,7 @@ module.exports = {
           lastName: last_name ?? null,
           image: userData?.image,
           isVerified: true,
-          password: userData?.password
+          password: `${userData.email}_${appleId}`
         });
 
         const savedUser = await newUser.save();

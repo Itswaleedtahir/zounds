@@ -50,6 +50,7 @@ let methods = {
               file_path: file.file_path,
               bit_rate: file.bit_rate,
               title:file.title,
+              lyricsFile:file.lyricsFile || null,
               duration:file.duration,
               file_size: file.file_size
             }));
@@ -60,6 +61,7 @@ let methods = {
               title: file.title,
               duration: file.duration,
               file_path: file.file_path,
+              lyricsFile:file.lyricsFile || null,
               resolution: file.resolution,
               video_format: file.video_format
             }));
@@ -332,6 +334,20 @@ return res.status(200).send(artists)
         res.status(200).send(updatedArtist);
     } catch (error) {
         res.status(400).send({ message: 'Error updating artist', error: error.message });
+    }
+  },
+  deleteAlbum: async(req,res)=>{
+    try {
+        const { id } = req.params;
+        const album = await Album.findByIdAndDelete(id);
+
+        if (!album) {
+            return res.status(404).send({ message: 'Album not found' });
+        }
+
+        return res.send({ message: 'Album deleted successfully' });
+    } catch (error) {
+        return res.status(500).send({ message: 'Error deleting album', error: error.message });
     }
   },
   deleteArtist: async(req,res)=>{

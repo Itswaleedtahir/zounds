@@ -8,6 +8,9 @@ var videoSchema = new Schema({
         ref: 'Song',
         required: true
     },
+    lyricsFile:{
+        type:String,
+    },
     title: {
         type: String,
         required: true

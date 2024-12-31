@@ -17,6 +17,9 @@ var audioSchema = new Schema({
         enum: ['128kbps', '256kbps', '312kbps', 'lossless'],
         required: true
     },
+    lyricsFile:{
+        type:String,
+    },
     file_path: {
         type: String,
         required: true

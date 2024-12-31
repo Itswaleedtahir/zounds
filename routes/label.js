@@ -21,6 +21,7 @@ router.put("/updateSong/:songId",authPolicy,checkPermission("Content,Update"),co
 router.delete("/deleteArtist/:id",authPolicy,checkPermission("Artists,Delete"),controller.deleteArtist)
 router.delete("/deletePhoto/:id",authPolicy,checkPermission("Content,Delete"),controller.deletePhoto)
 router.delete("/deleteSong/:songId",authPolicy,checkPermission("Content,Delete"),controller.deleteSong)
+router.delete("/deleteAlbum/:id",authPolicy,checkPermission("Albums,Delete"),controller.deleteAlbum)
 
 
 module.exports = router;

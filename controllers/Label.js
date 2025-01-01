@@ -336,6 +336,30 @@ return res.status(200).send(artists)
         res.status(400).send({ message: 'Error updating artist', error: error.message });
     }
   },
+  updateAlbum: async(req,res)=>{
+    const { id } = req.params; // Get the album ID from the URL
+    const { artist_id, label_id, songs_id, photos_id, title, release_date, cover_image } = req.body;
+  
+    try {
+      const album = await Album.findByIdAndUpdate(id, {
+        artist_id,
+        label_id,
+        songs_id,
+        photos_id,
+        title,
+        release_date,
+        cover_image
+      }, { new: true }); // 'new: true' returns the updated object
+  
+      if (!album) {
+        return res.status(404).send('Album not found');
+      }
+  
+     return res.status(201).send(album);
+    } catch (error) {
+        return res.status(500).send({ message: 'Error updating album', error: error.message });
+    }
+  },
   deleteAlbum: async(req,res)=>{
     try {
         const { id } = req.params;

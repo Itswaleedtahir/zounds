@@ -16,6 +16,7 @@ router.get("/getLabelArtists",authPolicy,checkPermission("Artists,View"),control
 router.get("/getLabelArtistSingle/:artistId",authPolicy,checkPermission("Artists,View"),controller.getSingleArtist)
 router.get("/getSinglePhoto/:id",authPolicy,checkPermission("Content,View"),controller.getSinglePhoto)
 router.put("/updateLabelArtistSingle/:id",authPolicy,checkPermission("Artists,Update"),controller.updateArtist)
+router.put("/updateLabelAlbum/:id",authPolicy,checkPermission("Albums,Update"),controller.updateAlbum)
 router.put("/updatePhoto/:id",authPolicy,checkPermission("Content,Update"),controller.updatePhoto)
 router.put("/updateSong/:songId",authPolicy,checkPermission("Content,Update"),controller.updateSong)
 router.delete("/deleteArtist/:id",authPolicy,checkPermission("Artists,Delete"),controller.deleteArtist)

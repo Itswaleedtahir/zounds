@@ -623,7 +623,7 @@ module.exports = {
   getAllArtists: async (req, res) => {
     try {
       const artists = await Artist.find({});
-      return res.status(201).json({ artists: artists, success: true });
+      return res.status(200).json({ artists: artists, success: true });
     } catch (error) {
       console.error('Error fetching album:', error);
       return res.status(500).send({ message: 'Error fetching album', error: error.message });

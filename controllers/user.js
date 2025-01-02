@@ -280,6 +280,7 @@ module.exports = {
       return res.status(200).json({
         success: true,
         message: 'Preference created successfully',
+        user:user
       });
     } catch (error) {
       console.error("Error creating preference:", error);

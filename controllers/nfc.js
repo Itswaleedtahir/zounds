@@ -75,7 +75,7 @@ module.exports = {
             // Define the path for the uploads folder
             const mainDir = path.join(__dirname, '../uploads'); // Navigate up one level from the current directory to the main directory
             if (!fs.existsSync(mainDir)) {
-                fs.mkdirSync(mainDir); // Create the directory if it doesn't exist
+                fs.mkdirSync(mainDir,{ recursive: true }); // Create the directory if it doesn't exist
             }
     
             // Append a timestamp to the filename

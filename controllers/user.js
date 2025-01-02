@@ -277,11 +277,9 @@ module.exports = {
       });
 
       await newPreference.save();
-      return res.status(201).json({
+      return res.status(200).json({
         success: true,
         message: 'Preference created successfully',
-        data: newPreference,
-        user: user
       });
     } catch (error) {
       console.error("Error creating preference:", error);
@@ -456,7 +454,7 @@ module.exports = {
       const user_id = req.token._id
       const downloadArtist = new DownloadArtist({ user_id, artist_id });
       await downloadArtist.save();
-      return res.status(201).json({ message: "Artist downloaded successfully", message: true });
+      return res.status(200).json({ message: "Artist downloaded successfully", message: true });
     } catch (error) {
       console.error('Server error:', error);
       return res.status(500).json({ message: 'Internal server error', success: false });
@@ -660,7 +658,7 @@ module.exports = {
         album_id: albumId
       });
       await newPlay.save();
-      return res.status(201).json({ message: "Song played", success: true });
+      return res.status(200).json({ message: "Song played", success: true });
 
     } catch (error) {
       console.error("Error retrieving genres:", error);

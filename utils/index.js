@@ -5,6 +5,9 @@ const AWS = require("aws-sdk")
 const jwt = require("jsonwebtoken");
 const crypto = require('crypto');
 const secret = process.env.secret
+const fs = require('fs');
+const path = require('path');
+const mime = require('mime-types');
 dotenv.config();
 const transporter = nodemailer.createTransport({
   host: "smtp-relay.brevo.com",
@@ -24,6 +27,7 @@ const s3 = new AWS.S3({
   apiVersion: "2006-03-01", // Optional, use the latest API version
   region: process.env.AWS_REGION, // Ensure the region is explicitly passed
 });
+
 module.exports = {
   generateErrorInstance({ status, message }) {
     const error = new Error(message);
@@ -216,6 +220,7 @@ module.exports = {
       });
     }
   },
+
  checkRole:(requiredRoles)=> {
     return function (req, res, next) {
       // Check if the user's role is included in the list of required roles
@@ -255,5 +260,39 @@ module.exports = {
 },
  generateOTP:() =>{
   return Math.floor(100000 + Math.random() * 900000).toString();
+},
+
+ uploadBufferToS3:async(filePath) =>{
+  const fileContent = fs.readFileSync(filePath);
+  // Extracting the file name from the file path
+const fileName = path.basename(filePath);
+console.log("mnmae",fileName)
+const folderName = 'nfcs'; // Name of the folder in S3
+const key = `${folderName}/${fileName}`; // Creates a path including the folder
+ params = {
+      Bucket: "fanzbox",
+      Key: key,
+      Body: fileContent
+  };
+
+  try {
+    const data = await s3.upload(params).promise();
+    console.log(`Successfully uploaded data to ${data.Location}`);
+    // Delete the file locally after upload
+    fs.unlink(filePath, (err) => {
+      if (err) {
+          console.error("Error deleting the file:", err);
+      } else {
+          console.log(`Successfully deleted local file: ${filePath}`);
+      }
+  });
+    return data.Location; // This returns the full URL of the uploaded file
+} catch (err) {
+    console.error('Error uploading data:', err);
+    throw err; // Rethrow the error for handling in the calling function
 }
+}
+
+
+
 };

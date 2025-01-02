@@ -2,18 +2,19 @@ const NFC = require("../models/nfc")
 const UserAlbum = require("../models/userAlbums")
 const Album = require("../models/album")
 const Admin = require("../models/dashboardUsers")
-const {generateOTP,generateToken} = require("../utils/index")
+const {generateOTP,generateToken,uploadBufferToS3} = require("../utils/index")
 const { parse } = require('json2csv');
 const fs = require('fs');
 const album = require("./album");
+const path = require('path');
 module.exports = {
-   createNfc: async(req, res) => {
+    createNfc: async(req, res) => {
         const { album_id, numberOfNFC, activate, label_id: bodyLabelId } = req.body;
         let label_id;
         let labelUser;
         let labelName = ''; // To store the label name
         const userRole = req.token.role.toString().toUpperCase();
-        
+    
         if (userRole === 'SUPER_ADMIN') {
             label_id = bodyLabelId;
             labelUser = await Admin.findById(label_id);
@@ -29,7 +30,6 @@ module.exports = {
             return res.status(400).send({ message: 'Missing label ID or unauthorized access' });
         }
     
-        // If label user exists, concatenate their name
         if (labelUser) {
             labelName = `${labelUser.firstName} ${labelUser.lastName}`;
         }
@@ -58,11 +58,8 @@ module.exports = {
             }
     
             const album = await Album.findById(album_id);
-            console.log("Album", album);
-            await NFC.insertMany(nfcChips);
-    
             const csvData = nfcChips.map(item => ({
-                label_name: labelName, // Using fetched label name
+                label_name: labelName,
                 album_name: album ? album.title : '',
                 token: item.token,
                 code: item.code,
@@ -73,18 +70,33 @@ module.exports = {
                 updatedAt: item.updatedAt
             }));
     
-            const { parse } = require('json2csv');
             const csv = parse(csvData);
     
-            res.header('Content-Type', 'text/csv');
-            res.header('Content-Disposition', 'attachment; filename=NFCs.csv');
-            res.send(csv);
+            // Define the path for the uploads folder
+            const mainDir = path.join(__dirname, '../uploads'); // Navigate up one level from the current directory to the main directory
+            if (!fs.existsSync(mainDir)) {
+                fs.mkdirSync(mainDir); // Create the directory if it doesn't exist
+            }
+    
+            // Append a timestamp to the filename
+            const date = new Date();
+            const timestamp = date.getTime(); // You could also use date.toISOString() for a more readable format
+            const filename = `NFCs_${timestamp}.csv`;
+            const filePath = path.join(mainDir, filename);
+            fs.writeFileSync(filePath, csv);
+            // Generate a local URL or relative path
+            const fileLink = `D:/Zounnd/zounds/uploads/${filename}`;
+            const s3Link = await uploadBufferToS3(filePath);
+            console.log("Link: ", s3Link);
+            return res.json({
+                success: true,
+                fileLink:s3Link
+            });
         } catch (error) {
             console.log("error", error);
             return res.status(500).send({ message: 'Error creating NFCs', error: error.message });
         }
     },
-    
     getAllNfcs: async(req,res)=>{
         const userRole = req.token.role.toString().toUpperCase();
         const userId = req.token._id; // User's ID from the token

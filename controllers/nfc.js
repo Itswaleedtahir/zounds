@@ -86,7 +86,7 @@ module.exports = {
             fs.writeFileSync(filePath, csv);
             // Generate a local URL or relative path
             const fileLink = `D:/Zounnd/zounds/uploads/${filename}`;
-            const s3Link = await uploadBufferToS3(filePath);
+            const s3Link = await uploadBufferToS3(filePath,req.body.type || "Public");
             console.log("Link: ", s3Link);
             return res.json({
                 success: true,

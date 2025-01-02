@@ -262,7 +262,7 @@ module.exports = {
   return Math.floor(100000 + Math.random() * 900000).toString();
 },
 
- uploadBufferToS3:async(filePath) =>{
+ uploadBufferToS3:async(filePath,access) =>{
   const fileContent = fs.readFileSync(filePath);
   // Extracting the file name from the file path
 const fileName = path.basename(filePath);
@@ -272,7 +272,8 @@ const key = `${folderName}/${fileName}`; // Creates a path including the folder
  params = {
       Bucket: "fanzbox",
       Key: key,
-      Body: fileContent
+      Body: fileContent,
+      ACL: access === "Public" ? "public-read" : undefined, 
   };
 
   try {

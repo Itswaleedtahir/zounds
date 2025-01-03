@@ -279,14 +279,7 @@ const key = `${folderName}/${fileName}`; // Creates a path including the folder
   try {
     const data = await s3.upload(params).promise();
     console.log(`Successfully uploaded data to ${data.Location}`);
-    // Delete the file locally after upload
-    fs.unlink(filePath, (err) => {
-      if (err) {
-          console.error("Error deleting the file:", err);
-      } else {
-          console.log(`Successfully deleted local file: ${filePath}`);
-      }
-  });
+    
     return data.Location; // This returns the full URL of the uploaded file
 } catch (err) {
     console.error('Error uploading data:', err);

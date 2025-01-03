@@ -499,7 +499,7 @@ module.exports = {
       const preference = await preferences.findOne({ user_id: userId, artistsSelected: artistId });
       console.log("Preference:", preference);
 
-      let contentTypes = preference ? preference.artistContent : ['News', 'Event', 'Collectable items'];
+      let contentTypes = preference ? preference.artistContent : ['News', 'Concerts', 'Collectable items'];
       console.log("Preferred Content Types:", contentTypes);
 
       const results = {};
@@ -514,7 +514,7 @@ module.exports = {
         }
       }
 
-      if (contentTypes.includes('Event')) {
+      if (contentTypes.includes('Concerts')) {
         const events = await Event.find({ artist_id: artistId });
         if (events.length > 0) {
           results.events = events;

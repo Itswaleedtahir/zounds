@@ -495,30 +495,51 @@ module.exports = {
       const albums = await Album.find({ artist_id: artistId });
       console.log("Albums:", albums);
 
-      // Fetch artist preferences for the user or use default
+      // Attempt to fetch artist preferences for the user
       const preference = await preferences.findOne({ user_id: userId, artistsSelected: artistId });
       console.log("Preference:", preference);
 
-      const contentTypes = preference ? preference.artistContent : ['News', 'Event', 'Collectable items']; // Default to all if no preference
-      console.log("Content Types:", contentTypes);
+      let contentTypes = preference ? preference.artistContent : ['News', 'Event', 'Collectable items'];
+      console.log("Preferred Content Types:", contentTypes);
 
       const results = {};
-      if (contentTypes.includes('News') || contentTypes.length === 0) {
+      let contentAvailable = false;
+
+      // Check each content type for data
+      if (contentTypes.includes('News')) {
         const news = await News.find({ artist_id: artistId });
-        results.news = news;
+        if (news.length > 0) {
+          results.news = news;
+          contentAvailable = true;
+        }
       }
 
-      if (contentTypes.includes('Event') || contentTypes.length === 0) {
-        const event = await Event.find({ artist_id: artistId });
-        results.events = event;
-      }
-      if (contentTypes.includes('Collectable items') || contentTypes.length === 0) {
-        const shop = await Shop.find({ artist_id: artistId });
-        results.shop = shop;
+      if (contentTypes.includes('Event')) {
+        const events = await Event.find({ artist_id: artistId });
+        if (events.length > 0) {
+          results.events = events;
+          contentAvailable = true;
+        }
       }
 
-      if (Object.keys(results).length === 0) {
-        return res.status(404).send({ message: 'No content found for this artist according to user preferences or defaults.' });
+      if (contentTypes.includes('Collectable items')) {
+        const collectables = await Shop.find({ artist_id: artistId });
+        if (collectables.length > 0) {
+          results.shop = collectables;
+          contentAvailable = true;
+        }
+      }
+
+      // If no content available for preferred types, default to all
+      if (!contentAvailable) {
+        results.news = await News.find({ artist_id: artistId });
+        results.events = await Event.find({ artist_id: artistId });
+        results.shop = await Shop.find({ artist_id: artistId });
+      }
+
+      // Check if still no content found
+      if (Object.keys(results).every(key => results[key].length === 0)) {
+        return res.status(404).send({ message: 'No content found for this artist.' });
       }
 
       // Combine artist details with albums and other content results
@@ -536,6 +557,8 @@ module.exports = {
       return res.status(500).json({ message: 'Internal server error', success: false });
     }
   },
+
+
 
   getAlbumsOfUserRedeemed: async (req, res) => {
     const userId = req.token._id;

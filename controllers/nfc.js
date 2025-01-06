@@ -72,11 +72,12 @@ module.exports = {
     
             const csv = parse(csvData);
     
-            // Define the path for the uploads folder
-            const mainDir = path.join(__dirname, '../uploads'); // Navigate up one level from the current directory to the main directory
-            if (!fs.existsSync(mainDir)) {
-                fs.mkdirSync(mainDir,{ recursive: true }); // Create the directory if it doesn't exist
-            }
+            // Define the path for the uploads folder directly to your Nginx path
+        const mainDir = '/var/www/html/zounds/uploads';
+        if (!fs.existsSync(mainDir)) {
+            fs.mkdirSync(mainDir, { recursive: true }); // Create the directory if it doesn't exist
+        }
+
     
             // Append a timestamp to the filename
             const date = new Date();
@@ -93,7 +94,7 @@ module.exports = {
             console.log("Full File Link: ", fileLink);
             return res.json({
                 success: true,
-                fileLink: fileLink
+                fileLink: filename
             });
         } catch (error) {
             console.log("error", error);

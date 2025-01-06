@@ -168,34 +168,41 @@ module.exports = {
     getRecentAlbums: async (req, res) => {
         try {
             // Calculate the time 5 hours ago from now
-
             // const fiveHoursAgo = new Date(Date.now() - 5 * 60 * 60 * 1000);
-
-            // Fetch artists created within the last 5 hours
-            // const recentArtists = await Album.find({
-            //     createdAt: { $gte: fiveHoursAgo }
-            // });
-
-            const recentArtists = await Album.find()
-            .populate('artist_id')
-                .sort({ createdAt: -1 })
-                .limit(5);
-
-
+    
+            // Fetch albums created within the last 5 hours
+            const recentAlbums = await Album.find()
+            .populate('artist_id', 'name') // Populate only the name field from artist_id
+            .sort({ createdAt: -1 })
+            .limit(5);
+    
+            // Transform data to include artistName (only name) and omit artist_id
+            const transformedAlbums = recentAlbums.map(album => {
+                const artistName = album.artist_id[0] ? album.artist_id[0].name : null;
+    
+                // Destructure to exclude artist_id and include artistName in output
+                const { artist_id, ...rest } = album._doc;
+                return {
+                    ...rest,
+                    artistName: artistName // Only include the artist's name
+                };
+            });
+    
             return res.status(200).json({
                 success: true,
-                count: recentArtists.length,
-                data: recentArtists
+                count: transformedAlbums.length,
+                data: transformedAlbums
             });
         } catch (error) {
-            console.error("Error retrieving recent artists:", error);
+            console.error("Error retrieving recent albums:", error);
             return res.status(500).json({
                 success: false,
                 message: error.message || 'Internal server error'
             });
         }
-
     },
+    
+    
     getSingleAlbumApp: async (req, res) => {
         const { albumId } = req.params;
         const userId = req.token._id;

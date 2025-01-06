@@ -32,5 +32,10 @@ router.post("/downloadArtist",authPolicy,controller.downloadArtist)
 router.get("/getDownloadArtists",authPolicy,controller.getDownloadedArtists)
 router.get("/getSingleArtist/:artistId",authPolicy,controller.getSingleDownloadArtist)
 router.get("/getRedeemedAlbum/:albumId",authPolicy,controller.getRedeemedAlbums)
+router.get("/getArtistSocial/:artistId",authPolicy ,controller.getSocials);
+router.get("/getArtistNews/:artistId",authPolicy ,controller.getNewsEvents);
+router.get("/getFeaturedAlbums/:artistId",authPolicy ,controller.getFeatureAlbums);
+router.get("/getArtistShop/:artistId",authPolicy ,controller.getArtistShop);
+router.get("/getArtistMedia/:artistId",authPolicy ,controller.getArtistPhotos);
 
 module.exports = router;

@@ -4,7 +4,7 @@ const Dashboarduser = require("../models/dashboardUsers")
 module.exports = {
     createNews : async (req, res) => {
         try {
-            const { title, news, image } = req.body;
+            const { title, news, image,isActive } = req.body;
             if (!title || !news) {
                 return res.status(400).json({ msg: "Please provide Title and News content", success: false });
             }
@@ -38,6 +38,7 @@ module.exports = {
                 artist_id: artist ? artist._id : req.body.artist_id,  // Use found artist ID or expect it from body for labels
                 title: title,
                 news: news,
+                isActive:isActive,
                 image: image
             });
     
@@ -97,12 +98,13 @@ module.exports = {
     updateNews: async(req,res)=>{
         const newsId = req.params.id
         try {
-            const { title, news, image } = req.body;
+            const { title, news, image,isActive } = req.body;
                 
                 const newsItem = await News.findOne({_id:newsId})
                 // Update the news item if authorized
         newsItem.title = title || newsItem.title;
         newsItem.news = news || newsItem.news;
+        newsItem.isActive=isActive || newsItem.isActive
         newsItem.image = image || newsItem.image;
         const updatedNews = await newsItem.save();
                 return res.status(200).send(updatedNews)

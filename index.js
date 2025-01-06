@@ -5,9 +5,12 @@ const cors = require("cors");
 const connectDB = require("./config/dbConfig"); // Adjust the path as necessary
 const Router = require("./routes/index");
 const upload = require("express-fileupload");
+const path = require('path');
 const app = express();
 app.use(cors());
 app.use(express.json());
+// Serve static files from the uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(upload());
 app.use("/api", Router);
 var port = process.env.PORT || 4001;

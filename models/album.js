@@ -27,6 +27,10 @@ var albumSchema = new Schema({
         type: String,
         required: true
     },
+    isFeatured: {
+        type:Boolean,
+        default:false
+    },
     release_date: {
         type: Date,
         required: true

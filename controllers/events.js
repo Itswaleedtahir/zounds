@@ -4,7 +4,7 @@ const Dashboarduser = require("../models/dashboardUsers")
 module.exports = {
     createEvents : async (req, res) => {
         try {
-            const { title, venue,date,time,shopLink,description ,image } = req.body;
+            const { title, venue,date,time,shopLink,description ,image, isActive } = req.body;
             if (!title || !venue || !date || !time || !shopLink || !description) {
                 return res.status(400).json({ msg: "Please provide Event content", success: false });
             }
@@ -39,6 +39,7 @@ module.exports = {
                 title: title,
                 venue: venue,
                 date:date,
+                isActive:isActive,
                 time:time,
                 shopLink:shopLink,
                 description:description,
@@ -100,12 +101,13 @@ module.exports = {
     updateEvents: async(req,res)=>{
         const eventId = req.params.id
         try {
-            const { title, venue, date,time,description,shopLink ,image} = req.body;
+            const { title, venue, date,time,description,shopLink ,image,isActive} = req.body;
                 
                 const eventItem = await Events.findOne({_id:eventId})
                 // Update the news item if authorized
         eventItem.title = title || eventItem.title;
         eventItem.venue = venue || eventItem.venue;
+        eventItem.isActive = isActive || eventItem.isActive
         eventItem.date = date || eventItem.date;
         eventItem.time = time || eventItem.time;
         eventItem.description = description || eventItem.description;

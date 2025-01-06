@@ -18,7 +18,7 @@ module.exports = {
                 label_id = labelUser ? labelUser._id : null; // Ensure that createdBy points to the LABEL's ID
             }
         }
-        const { artist_id, songs_id, title, release_date, cover_image, photos_id } = req.body;
+        const { artist_id, songs_id, title, release_date, cover_image, photos_id ,isFeatured} = req.body;
 
         // Simplified validation checks
         if (!Array.isArray(artist_id)) {
@@ -39,6 +39,7 @@ module.exports = {
                 artist_id,
                 songs_id,
                 title,
+                isFeatured,
                 release_date,
                 photos_id: photos_id || null,
                 cover_image: cover_image || null

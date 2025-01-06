@@ -177,6 +177,7 @@ module.exports = {
             // });
 
             const recentArtists = await Album.find()
+            .populate('artist_id')
                 .sort({ createdAt: -1 })
                 .limit(5);
 

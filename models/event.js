@@ -13,6 +13,10 @@ var eventSchema = new Schema({
     ref: 'Artist',
     required: true
    },
+   isActive:{
+    type: Boolean,
+    default: false
+   },
    title:{
     type:String,
     required: true

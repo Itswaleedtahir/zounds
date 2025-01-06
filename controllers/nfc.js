@@ -84,19 +84,24 @@ module.exports = {
             const filename = `NFCs_${timestamp}.csv`;
             const filePath = path.join(mainDir, filename);
             fs.writeFileSync(filePath, csv);
-            // Generate a local URL or relative path
-            const fileLink = `D:/Zounnd/zounds/uploads/${filename}`;
-            const s3Link = await uploadBufferToS3(filePath,req.body.type || "Public");
-            console.log("Link: ", s3Link);
+    
+            // Construct the full URL
+            const protocol = req.protocol; // 'http' or 'https'
+            const host = req.get('host'); // 'example.com' or 'localhost:3000'
+            const fileLink = `${protocol}://${host}/uploads/${filename}`;
+    
+            console.log("Full File Link: ", fileLink);
             return res.json({
                 success: true,
-                fileLink:s3Link
+                fileLink: fileLink
             });
         } catch (error) {
             console.log("error", error);
             return res.status(500).send({ message: 'Error creating NFCs', error: error.message });
         }
     },
+    
+    
     getAllNfcs: async(req,res)=>{
         const userRole = req.token.role.toString().toUpperCase();
         const userId = req.token._id; // User's ID from the token

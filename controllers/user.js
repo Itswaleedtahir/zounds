@@ -651,13 +651,16 @@ module.exports = {
       return res.status(500).send({ message: 'Error fetching album', error: error.message });
     }
   },
-  getAllArtistsDownload: async (req, res) => {
+   // By Mujeeb
+   getAllArtistsDownload: async (req, res) => {
     try {
         const userId = req.token._id; 
+       
         const downloadedArtists = await DownloadArtist.find({ user_id: userId }).populate('artist_id');
         
-        const downloadedArtistIds = downloadedArtists.map(download => download.artist_id._id.toString());
-
+        const downloadedArtistIds = downloadedArtists
+            .flatMap(download => download.artist_id) 
+            .map(artist => artist?._id?.toString()) 
         const artists = await Artist.find({
             _id: { $nin: downloadedArtistIds }
         });

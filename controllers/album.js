@@ -178,13 +178,13 @@ module.exports = {
     
             // Transform data to include artistName (only name) and omit artist_id
             const transformedAlbums = recentAlbums.map(album => {
-                const artistName = album.artist_id[0] ? album.artist_id[0].name : null;
+                const artistName = album.artist_id[0] ? album.artist_id[0].name : '';
     
                 // Destructure to exclude artist_id and include artistName in output
                 const { artist_id, ...rest } = album._doc;
                 return {
                     ...rest,
-                    artistName: artistName // Only include the artist's name
+                    artistName: artistName  // Only include the artist's name
                 };
             });
     

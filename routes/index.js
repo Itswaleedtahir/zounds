@@ -15,6 +15,7 @@ const playlistRouter = require("./playlist");
 const likeSongRouter = require("./likedSongs");
 const chatRouter = require("./chat");
 const shopRouter = require("./shop");
+const socialRouter = require("./social");
 
 
 router.use('/v1/users', userRouter);
@@ -28,6 +29,7 @@ router.use('/album', albumRouter);
 router.use('/news', newsRouter);
 router.use('/events', eventRouter);
 router.use('/shop', shopRouter);
+router.use('/social', socialRouter);
 router.use('/chat', chatRouter);
 router.use('/nfc', nfcRouter);
 

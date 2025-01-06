@@ -651,6 +651,30 @@ module.exports = {
       return res.status(500).send({ message: 'Error fetching album', error: error.message });
     }
   },
+  getAllArtistsDownload: async (req, res) => {
+    try {
+        const userId = req.token._id; 
+        const downloadedArtists = await DownloadArtist.find({ user_id: userId }).populate('artist_id');
+        
+        const downloadedArtistIds = downloadedArtists.map(download => download.artist_id._id.toString());
+
+        const artists = await Artist.find({
+            _id: { $nin: downloadedArtistIds }
+        });
+
+        return res.status(200).json({
+            artists: artists,
+            success: true
+        });
+    } catch (error) {
+        console.error('Error fetching artists:', error);
+        return res.status(500).send({
+            message: 'Error fetching artists',
+            error: error.message
+        });
+    }
+},
+
   getAllGenre: async (req, res) => {
     try {
       const genres = await Genre.find({});

@@ -581,12 +581,29 @@ getSocials : async (req, res) => {
   }, 
   getFeatureAlbums: async(req,res)=>{
     try {
-      const {artistId} = req.params
-      const albums = await Album.find({ artist_id: artistId, isFeatured: true }).populate('artist_id');
-      return res.status(200).json({success:true, album:albums})
+      const { artistId } = req.params;
+      const albums = await Album.find({ artist_id: artistId, isFeatured: true })
+                                .populate('artist_id', 'name'); // Include the artist's name
+  
+      // Transform the album data to adjust the artist_id field and remove the original array
+      const transformedAlbums = albums.map(album => {
+        // Assuming artist_id is always an array with one item for simplicity in this use case
+        const artist = album.artist_id[0] ? {
+          _id: album.artist_id[0]._id,
+          name: album.artist_id[0].name
+        } : null;
+  
+        // Use object destructuring and rest to omit the artist_id field and add artistName
+        const { artist_id, ...rest } = album._doc;
+        return {
+          ...rest,
+          artistName: artist.name // Include artistName object instead of the array
+        };
+      });
+  
+      res.status(200).json({ success: true, album: transformedAlbums });
     } catch (error) {
-      console.error('Server error:', error);
-      return res.status(500).json({ message: 'Internal server error', success: false });
+      res.status(500).json({ message: error.message });
     }
   },
   getArtistShop: async(req,res)=>{

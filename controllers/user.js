@@ -603,7 +603,7 @@ module.exports = {
         return res.status(404).send({ message: 'No album found with that ID', success: false });
       }
 
-      console.log(album);
+      
 
       // Extract song IDs from the single album
       const songIds = album.songs_id.map(song => song._id);

@@ -15,6 +15,7 @@ const UserAlbum = require("../models/userAlbums");
 const Album = require("../models/album");
 const Song = require("../models/song")
 const Shop = require("../models/shop")
+const Social = require("../models/social")
 const Audio = require("../models/audio")
 const Video = require("../models/video")
 const PlayHistory = require("../models/listeningHistory")
@@ -557,9 +558,67 @@ module.exports = {
       return res.status(500).json({ message: 'Internal server error', success: false });
     }
   },
-
-
-
+getSocials : async (req, res) => {
+        try {
+                const {artistId}=req.params
+                const socials = await Social.find({artist_id:artistId})
+                return res.status(200).send(socials)
+        } catch (error) {
+            console.log("error",error)
+            return res.status(500).json({ message: error.message });
+        }
+    }, 
+    getNewsEvents : async (req, res) => {
+      try {
+              const {artistId}=req.params
+              const news = await News.find({artist_id:artistId})
+              const event = await Event.find({artist_id:artistId})
+              return res.status(200).json({success:true, News:news,Event:event})
+      } catch (error) {
+          console.log("error",error)
+          return res.status(500).json({ message: error.message });
+      }
+  }, 
+  getFeatureAlbums: async(req,res)=>{
+    try {
+      const {artistId} = req.params
+      const albums = await Album.find({ artist_id: artistId, isFeatured: true });
+      return res.status(200).json({success:true, album:albums})
+    } catch (error) {
+      console.error('Server error:', error);
+      return res.status(500).json({ message: 'Internal server error', success: false });
+    }
+  },
+  getArtistShop: async(req,res)=>{
+    try {
+      const {artistId} = req.params
+      const shop = await Shop.find({ artist_id: artistId });
+      return res.status(200).json({success:true, shop:shop})
+    } catch (error) {
+      console.error('Server error:', error);
+      return res.status(500).json({ message: 'Internal server error', success: false });
+    }
+  },
+  getArtistPhotos: async(req,res)=>{
+    try {
+      const { artistId } = req.params;
+      // Find the albums and populate the photos_id field
+      const albums = await Album.find({ artist_id: artistId })
+                                .select('photos_id -_id')
+                                .populate('photos_id');
+      // Extract and format the populated photo data
+      const photoData = albums.map(album => album.photos_id.map(photo => ({
+        id:photo._id,
+        url: photo.img_url, // Assume each photo document has a 'url' field
+        title: photo.title, // Assume there is a 'title' field
+        // Add other fields as needed
+      })));
+      
+      res.status(200).json(photoData.flat()); // Flatten the array to a single level
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  },
   getAlbumsOfUserRedeemed: async (req, res) => {
     const userId = req.token._id;
 

@@ -591,7 +591,7 @@ getSocials : async (req, res) => {
         const artist = album.artist_id[0] ? {
           _id: album.artist_id[0]._id,
           name: album.artist_id[0].name
-        } : null;
+        } : '';
   
         // Use object destructuring and rest to omit the artist_id field and add artistName
         const { artist_id, ...rest } = album._doc;

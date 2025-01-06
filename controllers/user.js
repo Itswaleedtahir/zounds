@@ -582,7 +582,7 @@ getSocials : async (req, res) => {
   getFeatureAlbums: async(req,res)=>{
     try {
       const {artistId} = req.params
-      const albums = await Album.find({ artist_id: artistId, isFeatured: true });
+      const albums = await Album.find({ artist_id: artistId, isFeatured: true }).populate('artist_id');
       return res.status(200).json({success:true, album:albums})
     } catch (error) {
       console.error('Server error:', error);

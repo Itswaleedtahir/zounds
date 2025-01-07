@@ -461,6 +461,7 @@ return res.status(200).send(artists)
           return new Photo({
               img_url: photo.img_url,
               title: photo.title,
+              type:photo.type,
               label_id: label_id
           });
       });

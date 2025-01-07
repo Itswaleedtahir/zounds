@@ -11,6 +11,9 @@ var photoSchema = new Schema({
    img_url:{
     type:String
    },
+   type:{
+    type:String
+   },
    title:{
     type:String
    },

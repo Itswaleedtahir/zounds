@@ -5,6 +5,7 @@ const Admin = require("../models/dashboardUsers")
 const {generateOTP,generateToken,uploadBufferToS3} = require("../utils/index")
 const { parse } = require('json2csv');
 const fs = require('fs');
+const csv = require('csv-parser');
 const album = require("./album");
 const path = require('path');
 module.exports = {
@@ -101,8 +102,63 @@ module.exports = {
             return res.status(500).send({ message: 'Error creating NFCs', error: error.message });
         }
     },
+    importNfc: async(req, res) => {
+        if (!req.files.file) {
+            return res.status(400).send('No file uploaded.');
+        }
     
+        let label_id;
+        let labelUser;
+        let labelName = ''; // To store the label name
+        const userRole = req.token.role.toString().toUpperCase();
     
+        if (userRole === 'SUPER_ADMIN') {
+            label_id = bodyLabelId;
+            labelUser = await Admin.findById(label_id);
+        } else if (userRole === 'LABEL') {
+            label_id = req.token._id;
+            labelUser = await Admin.findById(label_id);
+        } else if (userRole === 'LABEL_STAFF') {
+            labelUser = await Admin.findById(req.token.createdBy);
+            label_id = labelUser ? labelUser._id : null;
+        }
+    
+        if (!label_id || !labelUser) {
+            return res.status(400).send({ message: 'Missing label ID or unauthorized access' });
+        }
+    
+        const results = [];
+        const bufferStream = new require('stream').Readable();
+        bufferStream.push(req.files.file.data); // Push buffer to stream
+        bufferStream.push(null); // Indicate end of stream
+    
+        bufferStream
+            .pipe(csv())
+            .on('data', (row) => results.push(row))
+            .on('end', async () => {
+                try {
+                    for (const row of results) {
+                        const newNFC = new NFC({
+                            label_id: label_id, // Assuming label_id is already an ObjectId
+                            album_id: req.body.album_id, // Convert to ObjectId
+                            token: row.token,
+                            code: row.code,
+                            activationDate: row.activationDate,
+                            status: 'active', // Set default status
+                            mapped: false // Set default mapping
+                        });
+                        await newNFC.save();
+                    }
+                   return res.status(201).json({message:'Data uploaded and saved successfully',success:true});
+                } catch (error) {
+                   return res.status(500).send('Failed to save data: ' + error.message);
+                }
+            })
+            .on('error', (error) => {
+                res.status(500).send('Failed to process file: ' + error.message);
+            });
+    },
+       
     getAllNfcs: async(req,res)=>{
         const userRole = req.token.role.toString().toUpperCase();
         const userId = req.token._id; // User's ID from the token

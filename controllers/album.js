@@ -70,10 +70,6 @@ module.exports = {
                 .populate({
                     path: 'artist_id',  // Correctly accessing the array of artist IDs
                     model: 'Artist',
-                    populate: {
-                        path: 'userId',   // The field in Artist schema that references Dashboarduser
-                        model: 'Dashboarduser'
-                    }    // Explicitly specifying the model might help if the ref is not being recognized
                 })
 
             const songIds = albums.map(album => album.songs_id.map(song => song._id)).flat();

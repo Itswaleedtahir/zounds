@@ -562,7 +562,7 @@ getSocials : async (req, res) => {
         try {
                 const {artistId}=req.params
                 const socials = await Social.find({artist_id:artistId})
-                return res.status(200).send(socials)
+                return res.status(200).json({socials:socials,success:true})
         } catch (error) {
             console.log("error",error)
             return res.status(500).json({ message: error.message });
@@ -616,26 +616,45 @@ getSocials : async (req, res) => {
       return res.status(500).json({ message: 'Internal server error', success: false });
     }
   },
-  getArtistPhotos: async(req,res)=>{
+  getArtistPhotos: async(req, res) => {
     try {
-      const { artistId } = req.params;
-      // Find the albums and populate the photos_id field
-      const albums = await Album.find({ artist_id: artistId })
-                                .select('photos_id -_id')
-                                .populate('photos_id');
-      // Extract and format the populated photo data
-      const photoData = albums.map(album => album.photos_id.map(photo => ({
-        id:photo._id,
-        url: photo.img_url, // Assume each photo document has a 'url' field
-        title: photo.title, // Assume there is a 'title' field
-        // Add other fields as needed
-      })));
-      
-      res.status(200).json(photoData.flat()); // Flatten the array to a single level
+        const { artistId } = req.params;
+        // Find the albums and populate the photos_id field
+        const albums = await Album.find({ artist_id: artistId })
+                                  .select('photos_id -_id')
+                                  .populate('photos_id');
+
+        // Use an object to temporarily store data to prevent duplicates
+        const photoMap = {};
+        albums.forEach(album => {
+            album.photos_id.forEach(photo => {
+                // Store each photo by its ID in an object to ensure uniqueness
+                photoMap[photo._id.toString()] = {
+                    id: photo._id.toString(),
+                    url: photo.img_url, // Assume each photo document has an 'img_url' field
+                    title: photo.title, // Assume there is a 'title' field
+                    type: photo.type
+                    // Add other fields as needed
+                };
+            });
+        });
+
+        // Convert the map to an array of photo objects
+        const uniquePhotosAndVideos = Object.values(photoMap);
+        
+        // Wrap the array in a 'photosAndVideos' object
+        const response = {
+          success:true,
+            photosAndVideos: uniquePhotosAndVideos
+        };
+        
+        res.status(200).json(response); // Send the wrapped array of unique photos and videos
     } catch (error) {
-      res.status(500).json({ message: error.message });
+        res.status(500).json({ message: error.message });
     }
-  },
+},
+
+
   getAlbumsOfUserRedeemed: async (req, res) => {
     const userId = req.token._id;
 

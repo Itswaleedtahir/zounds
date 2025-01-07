@@ -95,25 +95,25 @@ module.exports = {
             return res.status(500).json({ message: error.message });
         }
     },  
-    updateNews: async(req,res)=>{
-        const newsId = req.params.id
+    updateNews: async(req, res) => {
+        const newsId = req.params.id;
         try {
-            const { title, news, image,isActive } = req.body;
-                
-                const newsItem = await News.findOne({_id:newsId})
-                // Update the news item if authorized
-        newsItem.title = title || newsItem.title;
-        newsItem.news = news || newsItem.news;
-        newsItem.isActive=isActive || newsItem.isActive
-        newsItem.image = image || newsItem.image;
-        const updatedNews = await newsItem.save();
-                return res.status(200).send(updatedNews)
-
-
+            const { title, news, image, isActive } = req.body;
+            console.log("body", req.body);
+            const newsItem = await News.findOne({_id: newsId});
+    
+            // Check if each property is provided before updating
+            if (title !== undefined) newsItem.title = title;
+            if (news !== undefined) newsItem.news = news;
+            if (isActive !== undefined) newsItem.isActive = isActive;
+            if (image !== undefined) newsItem.image = image;
+    
+            const updatedNews = await newsItem.save();
+            return res.status(200).send(updatedNews);
         } catch (error) {
             return res.status(500).json({ message: error.message });
         }
-    },
+    },    
     deleteNews: async(req,res)=>{
         try {
             const photoId = req.params.id;

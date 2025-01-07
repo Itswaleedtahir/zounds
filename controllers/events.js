@@ -98,25 +98,25 @@ module.exports = {
             return res.status(500).json({ message: error.message });
         }
     },  
-    updateEvents: async(req,res)=>{
-        const eventId = req.params.id
+    updateEvents: async(req, res) => {
+        const eventId = req.params.id;
         try {
-            const { title, venue, date,time,description,shopLink ,image,isActive} = req.body;
-                
-                const eventItem = await Events.findOne({_id:eventId})
-                // Update the news item if authorized
-        eventItem.title = title || eventItem.title;
-        eventItem.venue = venue || eventItem.venue;
-        eventItem.isActive = isActive || eventItem.isActive
-        eventItem.date = date || eventItem.date;
-        eventItem.time = time || eventItem.time;
-        eventItem.description = description || eventItem.description;
-        eventItem.shopLink = shopLink || eventItem.shopLink;
-        eventItem.image = image || eventItem.image;
-        const updatedNews = await eventItem.save();
-                return res.status(200).send(updatedNews)
-
-
+            const { title, venue, date, time, description, shopLink, image, isActive } = req.body;
+            console.log("body", req.body);
+            const eventItem = await Events.findOne({_id: eventId});
+    
+            // Explicitly check if each property is provided before updating
+            if (title !== undefined) eventItem.title = title;
+            if (venue !== undefined) eventItem.venue = venue;
+            if (date !== undefined) eventItem.date = date;
+            if (time !== undefined) eventItem.time = time;
+            if (description !== undefined) eventItem.description = description;
+            if (shopLink !== undefined) eventItem.shopLink = shopLink;
+            if (image !== undefined) eventItem.image = image;
+            if (isActive !== undefined) eventItem.isActive = isActive;
+    
+            const updatedEvent = await eventItem.save();
+            return res.status(200).send(updatedEvent);
         } catch (error) {
             return res.status(500).json({ message: error.message });
         }

@@ -340,9 +340,10 @@ module.exports = {
             const response = userAlbum.toObject(); // Convert the Mongoose document to a plain JavaScript object
             response.album_id = album_id;  // Override the album_id array with the single album ID
     
-            return res.status(200).send({
+            return res.status(200).json({
                 message: "NFC verified and album added to user's collection.",
-                data: response
+                data: response,
+                success:true
             });
         } catch (error) {
             console.error('Error verifying NFC:', error);

@@ -74,6 +74,7 @@ let methods = {
         }
         console.log("role",role)
         if(role.role === "ARTIST"){
+          const name = `${firstName} ${lastName}`
           let artist = new Artist({ name, bio, profile_picture:image,userId: addUser._id,label_id:label_id});
           let artistAdd = await artist.save();
         }

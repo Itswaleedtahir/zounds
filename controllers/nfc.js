@@ -298,7 +298,7 @@ module.exports = {
             return res.status(500).send({ message: 'Failed to export data to CSV:', error: error.message });
         }
     },
-    verifyNfc:async(req,res)=>{
+    verifyNfc: async(req, res) => {
         const { token, code, album_id } = req.body;
         const userId = req.token._id; // Extract user ID from JWT token passed in the request
     
@@ -309,20 +309,20 @@ module.exports = {
         try {
             const nfcRecord = await NFC.findOne({ token: token });
             if (!nfcRecord) {
-                return res.status(404).send({ message: "NFC record not found.",status:false });
+                return res.status(404).send({ message: "NFC record not found.", status: false });
             }
     
             // Check if NFC is already used
             if (nfcRecord.mapped) {
-                return res.status(400).send({ message: "This NFC has already been used." ,status:false});
+                return res.status(400).send({ message: "This NFC has already been used.", status: false });
             }
     
             if (nfcRecord.code !== code || nfcRecord.album_id.toString() !== album_id) {
-                return res.status(401).send({ message: "Invalid code or album ID.",status:false });
+                return res.status(401).send({ message: "Invalid code or album ID.", status: false });
             }
     
             if (nfcRecord.status !== 'active') {
-                return res.status(400).send({ message: "This NFC is not active.",status:false });
+                return res.status(400).send({ message: "This NFC is not active.", status: false });
             }
     
             // Update NFC record to marked as mapped
@@ -336,10 +336,18 @@ module.exports = {
                 { new: true, upsert: true }
             );
     
-           return res.status(200).send({ message: "NFC verified and album added to user's collection.", data: userAlbum });
+            // Prepare the response object, changing album_id to a string
+            const response = userAlbum.toObject(); // Convert the Mongoose document to a plain JavaScript object
+            response.album_id = album_id;  // Override the album_id array with the single album ID
+    
+            return res.status(200).send({
+                message: "NFC verified and album added to user's collection.",
+                data: response
+            });
         } catch (error) {
             console.error('Error verifying NFC:', error);
-          return  res.status(500).send({ message: "Error verifying NFC." });
+            return res.status(500).send({ message: "Error verifying NFC." });
         }
     }
+    
 }

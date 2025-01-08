@@ -184,7 +184,7 @@ module.exports = {
             const messages = await Chat.find({ artist_id: artistId }).sort({ createdAt: -1 });
     
             if (!messages.length) {
-                return res.status(404).json({ message: 'No messages found for this artist.' });
+                return res.status(404).json({ message:[],success:true });
             }
     
             // Loop through each message to attach reactions

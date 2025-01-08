@@ -903,5 +903,63 @@ getSocials : async (req, res) => {
             error: error
         });
     }
+},
+listeningCount: async(req,res)=>{
+  try {
+    const artistId = req.params.artistId;
+    // Find all albums by the artist
+    const albums = await Album.find({ artist_id: artistId });
+
+    if (albums.length === 0) {
+        // Return default response with no songs and count 0
+        return res.status(200).json({playCounts:[{totalUniqueUsers: 0, songs: []}],success:true });
+    }
+
+    // Extract album IDs
+    const albumIds = albums.map(album => album._id);
+
+    // Aggregate song histories to count distinct users per song
+    const playCounts = await PlayHistory.aggregate([
+      {
+          $match: {
+              album_id: { $in: albumIds }
+          }
+      },
+      {
+          $group: {
+              _id: "$song_id",
+              uniqueUsers: { $addToSet: "$user_id" }
+          }
+      },
+      {
+          $project: {
+              song_id: "$_id",
+              uniqueUserCount: { $size: "$uniqueUsers" }
+          }
+      },
+      {
+          $group: {
+              _id: null,
+              totalUniqueUsers: { $sum: "$uniqueUserCount" },
+              songs: { $push: { song_id: "$song_id"} }
+          }
+      },
+      {
+          $project: {
+              _id: 0, // Exclude the _id field
+              totalUniqueUsers: 1,
+              songs: 1
+          }
+      }
+  ]);
+  if (playCounts.length === 0) {
+    // If no play counts are found, return default response
+    return res.status(200).json({ playCounts:[{totalUniqueUsers: 0, songs: []}] ,success:true});
+}
+   return res.status(200).json({playCounts,success:true});
+} catch (error) {
+    console.error("Failed to retrieve song play counts:", error);
+    return res.status(500).json({ message: "Internal server error" });
+}
 }
 };

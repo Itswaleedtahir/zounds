@@ -37,5 +37,6 @@ router.get("/getArtistNews/:artistId",authPolicy ,controller.getNewsEvents);
 router.get("/getFeaturedAlbums/:artistId",authPolicy ,controller.getFeatureAlbums);
 router.get("/getArtistShop/:artistId",authPolicy ,controller.getArtistShop);
 router.get("/getArtistMedia/:artistId",authPolicy ,controller.getArtistPhotos);
+router.get("/getArtistListeners/:artistId",authPolicy ,controller.listeningCount);
 
 module.exports = router;

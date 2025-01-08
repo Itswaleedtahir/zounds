@@ -338,7 +338,7 @@ return res.status(200).send(artists)
   },
   updateAlbum: async(req,res)=>{
     const { id } = req.params; // Get the album ID from the URL
-    const { artist_id, label_id, songs_id, photos_id, title, release_date, cover_image,isFeatured } = req.body;
+    const { artist_id, label_id, songs_id, photos_id, title, release_date, cover_image,isFeatured,description } = req.body;
   
     try {
       const album = await Album.findByIdAndUpdate(id, {
@@ -348,6 +348,7 @@ return res.status(200).send(artists)
         photos_id,
         title,
         release_date,
+        description,
         isFeatured,
         cover_image
       }, { new: true }); // 'new: true' returns the updated object

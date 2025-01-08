@@ -483,18 +483,34 @@ module.exports = {
   getSingleDownloadArtist: async (req, res) => {
     const userId = req.token._id;
     const { artistId } = req.params;
-
+    console.log("id",artistId)
     try {
       // Fetch the artist details
       const artist = await Artist.findById(artistId);
+      console.log("artist",artist)
       if (!artist) {
         return res.status(404).send({ message: 'Artist not found.' });
       }
       console.log("Artist:", artist);
 
       // Fetch albums associated with the artist
-      const albums = await Album.find({ artist_id: artistId });
+      const albums = await Album.find({ artist_id: artistId }).populate('artist_id', 'name'); ;
       console.log("Albums:", albums);
+       // Transform the album data to adjust the artist_id field and remove the original array
+       const transformedAlbums = albums.map(album => {
+        // Assuming artist_id is always an array with one item for simplicity in this use case
+        const artist = album.artist_id[0] ? {
+          _id: album.artist_id[0]._id,
+          name: album.artist_id[0].name
+        } : '';
+  
+        // Use object destructuring and rest to omit the artist_id field and add artistName
+        const { artist_id, ...rest } = album._doc;
+        return {
+          ...rest,
+          artistName: artist.name // Include artistName object instead of the array
+        };
+      });
 
       // Attempt to fetch artist preferences for the user
       const preference = await preferences.findOne({ user_id: userId, artistsSelected: artistId });
@@ -540,13 +556,21 @@ module.exports = {
 
       // Check if still no content found
       if (Object.keys(results).every(key => results[key].length === 0)) {
-        return res.status(404).send({ message: 'No content found for this artist.' });
+         // Combine artist details with albums and other content results
+      const artistDetails = {
+        ...artist.toObject(),
+        albums: transformedAlbums,  // Include the albums in the response
+        news: results.news || [],
+        events: results.events || [],
+        shop: results.shop || []
+      };
+        return res.status(200).send({ message: 'Artist Details missing',success:true, artist: artistDetails });
       }
 
       // Combine artist details with albums and other content results
       const artistDetails = {
         ...artist.toObject(),
-        albums: albums,  // Include the albums in the response
+        albums: transformedAlbums,  // Include the albums in the response
         news: results.news || [],
         events: results.events || [],
         shop: results.shop || []

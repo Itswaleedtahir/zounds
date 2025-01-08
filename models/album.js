@@ -35,6 +35,9 @@ var albumSchema = new Schema({
         type: Date,
         required: true
     },
+    description:{
+        type:String,
+    },
     cover_image: {
         type: String,
         default: null

@@ -144,13 +144,12 @@ module.exports = {
               // Check if the reaction already exists
         const existingReaction = await Reaction.findOne({
             message_id,
-            user_id,
-            emoji
+            user_id
         });
 
         if (existingReaction) {
             return res.status(409).json({ // 409 Conflict might be more appropriate than 400 Bad Request
-                message: 'You have already reacted with this emoji to the message.',
+                message: 'You have already reacted to this message.',
                 success: false
             });
         }

@@ -48,52 +48,59 @@ module.exports = {
          return   res.status(400).json({ message: error.message });
         }
     },
-     getChats : async (req, res) => {
+    getChats: async (req, res) => {
         try {
+            let chats;
             if (req.token.role === 'ARTIST') {
                 const artist = await Artist.findOne({ userId: req.token._id });
                 if (!artist) {
                     return res.status(404).json({ msg: "Artist not found", success: false });
                 }
-                const event = await Chat.find({artist_id:artist._id})
-                return res.status(200).send(event)
+                chats = await Chat.find({ artist_id: artist._id }).populate('artist_id');
             } else if (req.token.role === 'LABEL' || req.token.role === 'LABEL_STAFF') {
-                let label_id
-            const userRole = req.token.role.toString().toUpperCase();
-        if (['LABEL', 'LABEL_STAFF'].includes(userRole)) {
-          if (userRole === 'LABEL') {
-              // Directly use the user's ID if the role is LABEL
-              label_id = req.token._id;
-          } else if (userRole === 'LABEL_STAFF') {
-              // Find the label ID from the createdBy if the role is LABEL_STAFF
-              const labelUser = await Dashboarduser.findById(req.token.createdBy);
-              label_id = labelUser ? labelUser._id : null;  // Ensure that createdBy points to the LABEL's ID
-          }
-      }
-        // Find all artists created by this label
-        const artists = await Artist.find({ label_id: label_id });
-        if (!artists.length) {
-            return res.status(404).json({ msg: "No artists found for this label", success: false });
-        }
-
-        // Extract artist IDs
-        const artistIds = artists.map(artist => artist._id);
-        console.log("idsssssss",artistIds)
-        console.log("LLLLLLLLLLLLLidsssssss",label_id)
-        // Find all news created by these artists
-        const eventItems = await Chat.find({ artist_id: { $in: artistIds } }).populate('artist_id');
-        if (!eventItems.length) {
-            return res.status(404).json({ msg: "No news items found for these artists", success: false });
-        }
-
-       return res.status(200).json(eventItems);
+                let label_id = req.token.role === 'LABEL' ? req.token._id : null;
+                if (req.token.role === 'LABEL_STAFF') {
+                    const labelUser = await Dashboarduser.findById(req.token.createdBy);
+                    label_id = labelUser ? labelUser._id : null;
+                }
+                const artists = await Artist.find({ label_id: label_id });
+                if (!artists.length) {
+                    return res.status(404).json({ msg: "No artists found for this label", success: false });
+                }
+                const artistIds = artists.map(artist => artist._id);
+                chats = await Chat.find({ artist_id: { $in: artistIds } }).populate('artist_id');
             }
-
+    
+            if (!chats || !chats.length) {
+                return res.status(404).json({ msg: "No chat messages found", success: false });
+            }
+    
+            // Aggregate reactions based on message IDs from the chats
+            const messageIds = chats.map(chat => chat._id);
+            const reactions = await Reaction.aggregate([
+                { $match: { message_id: { $in: messageIds } } },
+                { $group: { _id: "$message_id", count: { $sum: 1 } } }
+            ]);
+    
+            // Convert reaction aggregation into a map for easy lookup
+            const reactionCounts = reactions.reduce((acc, reaction) => {
+                acc[reaction._id] = reaction.count;
+                return acc;
+            }, {});
+    
+            // Add reaction counts to chats
+            const chatResponses = chats.map(chat => ({
+                ...chat.toObject(),
+                reaction_count: reactionCounts[chat._id] || 0
+            }));
+    
+            return res.status(200).json(chatResponses);
         } catch (error) {
-            console.log("error",error)
+            console.log("Error:", error);
             return res.status(500).json({ message: error.message });
         }
-    },  
+    },
+    
     updateChat: async(req,res)=>{
         const chatId = req.params.id
         try {

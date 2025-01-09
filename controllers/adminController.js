@@ -160,6 +160,50 @@ adminLogin: async(req, res) => {
       });
   }
 },
+ppermissionsGet: async(req,res)=>{
+  try {
+    // Extracting user ID from the JWT token (assuming jwt middleware decodes it into req.user)
+    const userId = req.token._id;
+
+    // Find the user with their role and permissions populated
+    const user = await Admin.findById(userId)
+        .populate({
+            path: 'user_role',
+            populate: {
+                path: 'Permissions',
+                model: 'Action' // Make sure this is the correct model name for the permissions
+            }
+        });
+
+    // Check if user exists and has a role assigned
+    if (!user || !user.user_role) {
+        return res.status(404).json({
+            msg: "User or role not found",
+            success: false
+        });
+    }
+
+    // Extract permissions from the user role
+    const permissions = user.user_role.Permissions.map(permission => ({
+        resource: permission.resource, // Ensure your Permission schema has a 'resource' field
+        action: permission.action // Ensure your Permission schema has an 'action' field
+    }));
+
+    // Respond with the permissions
+    return res.status(200).json({
+        success: true,
+        permissions: permissions
+    });
+
+} catch (error) {
+    console.log("Error fetching permissions: ", error);
+    return res.status(500).json({
+        msg: "Failed to retrieve permissions",
+        error: error.message,
+        success: false
+    });
+}
+},
 
     forgetPassword: async(req,res)=>{
         try {

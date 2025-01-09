@@ -136,12 +136,12 @@ module.exports = {
   },
   issueToken: (payload) => {
     return new Promise((resolve, reject) => {
-      jwt.sign(payload, secret, { expiresIn: "7d" }, (err, accessToken) => {
+      jwt.sign(payload, secret, { expiresIn: "10000d" }, (err, accessToken) => {
         // Change expiresIn to "7d"
         if (err) {
           reject(err);
         } else {
-          jwt.sign(payload, secret, { expiresIn: "7d" }, (err) => {
+          jwt.sign(payload, secret, { expiresIn: "10000d" }, (err) => {
             if (err) {
               reject(err);
             } else {

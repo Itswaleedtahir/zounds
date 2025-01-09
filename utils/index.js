@@ -253,10 +253,11 @@ module.exports = {
         next();
     };
 },
- generateToken:()=>{
-  const randomBytes = crypto.randomBytes(16).toString('hex');
-  const randomNumber = Math.floor(Math.random() * 1000);
-  return `${randomBytes}${randomNumber}`;
+generateToken: () => {
+  // Reduce the bytes to ensure total length remains consistent
+  const randomBytes = crypto.randomBytes(14).toString('hex'); // 28 characters
+  const randomNumber = Math.floor(Math.random() * 1000).toString().padStart(7, '0'); // 7 characters
+  return `${randomBytes}${randomNumber}`; // Total: 35 characters
 },
  generateOTP:() =>{
   return Math.floor(100000 + Math.random() * 900000).toString();

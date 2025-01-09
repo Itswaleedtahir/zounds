@@ -344,7 +344,7 @@ module.exports = {
             return res.status(200).json({
                 message: "NFC verified and album added to user's collection.",
                 data: response,
-                success:true
+                status:true
             });
         } catch (error) {
             console.error('Error verifying NFC:', error);

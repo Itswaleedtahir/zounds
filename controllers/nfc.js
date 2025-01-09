@@ -310,20 +310,20 @@ module.exports = {
         try {
             const nfcRecord = await NFC.findOne({ token: token });
             if (!nfcRecord) {
-                return res.status(200).json({ message: "NFC record not found.",data:{} ,status: true });
+                return res.status(200).json({ message: "NFC record not found.",data:{} ,success: true });
             }
     
             // Check if NFC is already used
             if (nfcRecord.mapped) {
-                return res.status(200).json({ message: "This NFC has already been used.",data:{} ,status: true });
+                return res.status(200).json({ message: "This NFC has already been used.",data:{} ,success: true });
             }
     
             if (nfcRecord.code !== code || nfcRecord.album_id.toString() !== album_id) {
-                return res.status(200).json({ message: "Invalid code or album ID.",data:{} ,status: true });
+                return res.status(200).json({ message: "Invalid code or album ID.",data:{} ,success: true });
             }
     
             if (nfcRecord.status !== 'active') {
-                return res.status(200).json({ message: "This NFC is not active.",data:{} ,status: true });
+                return res.status(200).json({ message: "This NFC is not active.",data:{} ,success: true });
             }
     
             // Update NFC record to marked as mapped
@@ -344,7 +344,7 @@ module.exports = {
             return res.status(200).json({
                 message: "NFC verified and album added to user's collection.",
                 data: response,
-                status:true
+                success:true
             });
         } catch (error) {
             console.error('Error verifying NFC:', error);

@@ -55,6 +55,7 @@ module.exports = {
                     album_id,
                     ...activationDetails
                 });
+                await newNFC.save()
                 nfcChips.push(newNFC);
             }
     

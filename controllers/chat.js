@@ -139,7 +139,17 @@ module.exports = {
     createReaction: async(req,res)=>{
         const user_id = req.token._id
         const { message_id, emoji } = req.body;
+        const message = [{
+            "_id": "",
+    "label_id": "",
+    "artist_id": "",
+    "message": "",
+    "createdAt": "",
+    "updatedAt": "",
+    "__v": 0,
+    "reactions": []
 
+    }]
         try {
               // Check if the reaction already exists
         const existingReaction = await Reaction.findOne({
@@ -150,7 +160,8 @@ module.exports = {
         if (existingReaction) {
             return res.status(409).json({ // 409 Conflict might be more appropriate than 400 Bad Request
                 message: 'You have already reacted to this message.',
-                success: false
+                data: message,
+                success: true
             });
         }
             const newReaction = new Reaction({
@@ -161,7 +172,7 @@ module.exports = {
             const messages = await Chat.find({ _id:message_id });
     
             if (!messages.length) {
-                return res.status(404).json({ message: 'No messages found for this artist.' });
+                return res.status(404).json({ message: 'No messages found for this artist.',data:message,success:true });
             }
     
             // Loop through each message to attach reactions

@@ -17,6 +17,7 @@ router.post("/adminReset",controller.resetPassword)
 router.post("/adminUpdate",authPolicy,controller.updateAdmin)
 router.post("/createActions", controller.createActions);
 router.get("/getActions", controller.getActions);
+router.get("/getAllActions", authPolicy,controller.ppermissionsGet);
 router.get("/getAllLabels",authPolicy ,controller.getAllLabels);
 router.get("/getAllUsers",authPolicy,controller.getAllUsers);
 router.get("/getAllCustomers",authPolicy,controller.getCustomers);

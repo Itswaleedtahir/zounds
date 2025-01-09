@@ -513,67 +513,67 @@ module.exports = {
       });
 
       // Attempt to fetch artist preferences for the user
-      const preference = await preferences.findOne({ user_id: userId, artistsSelected: artistId });
-      console.log("Preference:", preference);
+      // const preference = await preferences.findOne({ user_id: userId, artistsSelected: artistId });
+      // console.log("Preference:", preference);
 
-      let contentTypes = preference ? preference.artistContent : ['News', 'Concerts', 'Collectable items'];
-      console.log("Preferred Content Types:", contentTypes);
+      // let contentTypes = preference ? preference.artistContent : ['News', 'Concerts', 'Collectable items'];
+      // console.log("Preferred Content Types:", contentTypes);
 
-      const results = {};
-      let contentAvailable = false;
+      // const results = {};
+      // let contentAvailable = false;
 
       // Check each content type for data
-      if (contentTypes.includes('News')) {
-        const news = await News.find({ artist_id: artistId });
-        if (news.length > 0) {
-          results.news = news;
-          contentAvailable = true;
-        }
-      }
+      // if (contentTypes.includes('News')) {
+      //   const news = await News.find({ artist_id: artistId });
+      //   if (news.length > 0) {
+      //     results.news = news;
+      //     contentAvailable = true;
+      //   }
+      // }
 
-      if (contentTypes.includes('Concerts')) {
-        const events = await Event.find({ artist_id: artistId });
-        if (events.length > 0) {
-          results.events = events;
-          contentAvailable = true;
-        }
-      }
+      // if (contentTypes.includes('Concerts')) {
+      //   const events = await Event.find({ artist_id: artistId });
+      //   if (events.length > 0) {
+      //     results.events = events;
+      //     contentAvailable = true;
+      //   }
+      // }
 
-      if (contentTypes.includes('Collectable items')) {
-        const collectables = await Shop.find({ artist_id: artistId });
-        if (collectables.length > 0) {
-          results.shop = collectables;
-          contentAvailable = true;
-        }
-      }
+      // if (contentTypes.includes('Collectable items')) {
+      //   const collectables = await Shop.find({ artist_id: artistId });
+      //   if (collectables.length > 0) {
+      //     results.shop = collectables;
+      //     contentAvailable = true;
+      //   }
+      // }
 
       // If no content available for preferred types, default to all
-      if (!contentAvailable) {
-        results.news = await News.find({ artist_id: artistId });
-        results.events = await Event.find({ artist_id: artistId });
-        results.shop = await Shop.find({ artist_id: artistId });
-      }
+      // if (!contentAvailable) {
+      //   results.news = await News.find({ artist_id: artistId });
+      //   results.events = await Event.find({ artist_id: artistId });
+      //   results.shop = await Shop.find({ artist_id: artistId });
+      // }
 
       // Check if still no content found
-      if (Object.keys(results).every(key => results[key].length === 0)) {
-         // Combine artist details with albums and other content results
-      const artistDetails = {
-        ...artist.toObject(),
-        albums: transformedAlbums,  // Include the albums in the response
-        news: results.news || [],
-        events: results.events || [],
-        shop: results.shop || []
-      };
-        return res.status(200).send({ message: 'Artist Details missing',success:true, artist: artistDetails });
-      }
+      // if (Object.keys(results).every(key => results[key].length === 0)) {
+      //    // Combine artist details with albums and other content results
+      // const artistDetails = {
+      //   ...artist.toObject(),
+      //   albums: transformedAlbums,  // Include the albums in the response
+      //   news: results.news || [],
+      //   events: results.events || [],
+      //   shop: results.shop || []
+      // };
+      //   return res.status(200).send({ message: 'Artist Details missing',success:true, artist: artistDetails });
+      // }
 
       // Combine artist details with albums and other content results
       const artistDetails = {
         ...artist.toObject(),
         albums: transformedAlbums,  // Include the albums in the response
-        news: results.news || [],
-        events: results.events || [],
-        shop: results.shop || []
+        // news: results.news || [],
+        // events: results.events || [],
+        // shop: results.shop || []
       };
 
       return res.status(200).json({ artist: artistDetails, success: true, message: "Artist Details" });

@@ -188,9 +188,19 @@ module.exports = {
         try {
             
             const messages = await Chat.find({ artist_id: artistId }).sort({ createdAt: -1 });
-    
+            const message = [{
+                    "_id": "",
+            "label_id": "",
+            "artist_id": "",
+            "message": "",
+            "createdAt": "",
+            "updatedAt": "",
+            "__v": 0,
+            "reactions": []
+
+            }]
             if (!messages.length) {
-                return res.status(404).json({ message:[],success:true });
+                return res.status(404).json({message:message,success:true });
             }
     
             // Loop through each message to attach reactions
@@ -199,7 +209,7 @@ module.exports = {
                 return { ...message._doc, reactions }; // Use _doc to access the raw document
             }));
     
-            return res.status(200).json(messagesWithReactions);
+            return res.status(200).json({message:messagesWithReactions , success:true});
         } catch (error) {
             console.error('Error fetching artist messages with reactions:', error);
             return res.status(500).json({ message: 'Internal server error', error: error.message });

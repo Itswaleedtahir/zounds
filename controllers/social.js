@@ -41,6 +41,7 @@ module.exports = {
     
      getSocials : async (req, res) => {
         try {
+            console.log("id",req.token._id)
                 const artist = await Artist.findOne({ userId: req.token._id });
                 if (!artist) {
                     return res.status(404).json({ msg: "Artist not found", success: false });

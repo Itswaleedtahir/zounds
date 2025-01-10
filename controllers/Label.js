@@ -60,6 +60,7 @@ let methods = {
               song_id: savedSong._id,
               title: file.title,
               duration: file.duration,
+              thumbnail:file.thumbnail,
               file_path: file.file_path,
               lyricsFile:file.lyricsFile || null,
               resolution: file.resolution,
@@ -221,7 +222,8 @@ let methods = {
                     duration: mediaUpdates.videos[0].duration,
                     file_path: mediaUpdates.videos[0].file_path,
                     resolution: mediaUpdates.videos[0].resolution,
-                    video_format: mediaUpdates.videos[0].video_format
+                    video_format: mediaUpdates.videos[0].video_format,
+                    thumbnail:mediaUpdates.videos[0].thumbnail
                 }
             });
         }

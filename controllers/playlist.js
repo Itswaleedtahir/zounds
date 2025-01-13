@@ -8,7 +8,7 @@ module.exports = {
     createPlaylist: async (req, res) => {
         const user_id = req.token._id;
         const { title, songs } = req.body;  // songs is an array of {songId, albumId}
-
+        console.log("here",songs)
         try {
             // Check for existing playlist with the same title for this user
             const existingPlaylist = await Playlist.findOne({ user_id, title });
@@ -30,17 +30,12 @@ module.exports = {
             // Extract songIds and albumIds
             const songIds = songs.map(song => song.songId);
             const albumIds = songs.map(song => song.albumId);
-
+            console.log("songs",songIds)
+            console.log("albums",albumIds)
             // Optional: Check if all provided song IDs and album IDs exist in the database
             const songCount = await Song.countDocuments({ _id: { $in: songIds } });
             const albumCount = await Album.countDocuments({ _id: { $in: albumIds } });
 
-            if (songCount !== songIds.length || albumCount !== albumIds.length) {
-                return res.status(400).json({
-                    msg: "One or more song or album IDs do not exist",
-                    success: false
-                });
-            }
 
             const newPlaylist = new Playlist({
                 user_id,

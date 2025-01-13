@@ -18,6 +18,11 @@ var songSchema = new Schema({
         enum: ['video', 'audio'],
         required: true
     },
+    likedBy:[{
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+        default: [] 
+    }],
     createdAt: {
         type: Date,
         default: Date.now

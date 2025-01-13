@@ -203,7 +203,7 @@ module.exports = {
     getSingleAlbumApp: async (req, res) => {
         const { albumId } = req.params;
         const userId = req.token._id;
-
+    
         try {
             console.log("user", userId);
             const userAlbums = await userAlbum.findOne({ user_id: userId });
@@ -219,57 +219,53 @@ module.exports = {
                         model: 'Dashboarduser'
                     }
                 });
-
+    
             if (!album) {
                 return res.status(404).send({ message: 'No album found with that ID', success: false });
             }
-
+    
             console.log(album);
-
-            // Fetch audio and video details for songs in this album
+    
             const songIds = album.songs_id.map(song => song._id);
             const audios = await Audio.find({ song_id: { $in: songIds } });
             const videos = await Video.find({ song_id: { $in: songIds } });
-
-            // Maps to associate song IDs with their respective audio and video
+    
             const audioMap = audios.reduce((map, audio) => {
                 map[audio.song_id.toString()] = audio;
                 return map;
             }, {});
-
+    
             const videoMap = videos.reduce((map, video) => {
                 map[video.song_id.toString()] = video;
                 return map;
             }, {});
-
-            // Check if the album is in the user's redeemed albums
+    
             const isRedeemed = userAlbums && userAlbums.album_id && userAlbums.album_id.includes(albumId);
-            console.log("Is redeemed:", isRedeemed || false);  // Log the redemption status
-
-            // Enhance the album's songs based on redemption status
+    
             const enhancedSongs = album.songs_id.map(song => {
+                const likedByCurrentUser = song.likedBy.includes(userId);
+                const songData = {
+                    ...song._doc,
+                    liked: isRedeemed && likedByCurrentUser, // Set liked flag based on redemption status
+                };
+                delete songData.likedBy;  // Remove the likedBy array from the response
                 if (isRedeemed) {
-                    // Include full details if redeemed
-                    return {
-                        ...song._doc,
-                        audio: audioMap[song._id.toString()],
-                        video: videoMap[song._id.toString()]
-                    };
-                } else {
-                    return {
-                        ...song._doc
-                    }
+                    songData.audio = audioMap[song._id.toString()];
+                    songData.video = videoMap[song._id.toString()];
                 }
+    
+                return songData;
             });
-            console.log("redeemed", isRedeemed)
-            // Return the enhanced album with appropriate song details
+    
+            console.log("redeemed", isRedeemed);
+    
             const enhancedAlbum = {
                 ...album._doc,
                 songs_id: enhancedSongs,
             };
-
+    
             return res.status(200).json({ Album: enhancedAlbum, success: true, redeemed: isRedeemed });
-
+    
         } catch (error) {
             console.error('Error fetching album:', error);
             return res.status(500).send({ message: 'Error fetching album', error: error.message });

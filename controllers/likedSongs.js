@@ -21,6 +21,10 @@ module.exports={
             });
             
             const savedUserAlbum = await userAlbum.save();
+             // If saved successfully, update the Song model
+        await Song.findByIdAndUpdate(req.body.song_id, {
+            $push: { likedBy: userId }
+        });
             return res.status(201).json({message:"Song liked", success:true});
         } catch (error) {
             console.log("error", error);
@@ -83,9 +87,16 @@ module.exports={
         const userId = req.token._id
 
     try {
+        console.log()
         // Attempt to find and remove the document matching both user ID and song ID
-        const result = await LikedSongs.findByIdAndDelete(id);
-
+          // Find and delete the document based on song_id and user_id
+          const result = await LikedSongs.findOneAndDelete({
+            song_id: id,
+            user_id: userId
+        });
+        await Song.findByIdAndUpdate(id, {
+            $pull: { likedBy: req.token._id }
+        });
         if (!result) {
             return res.status(404).json({ message: 'No such liked song found', success: false });
         }

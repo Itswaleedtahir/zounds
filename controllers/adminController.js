@@ -145,7 +145,7 @@ adminLogin: async(req, res) => {
               role: admin.user_role.role,
               firstName: admin.firstName,
               lastName: admin.lastName,
-              image: admin.profileImage,
+              profileImage: admin.profileImage,
               permissions: permissions,
               createdBy: admin.createdBy,
               artist: artist?._id || null

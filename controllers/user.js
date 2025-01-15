@@ -838,26 +838,33 @@ getSocials : async (req, res) => {
       });
     }
   },
-  getHistorySongs: async(req, res) => {
+ getHistorySongs: async (req, res) => {
     const userId = req.token._id;
+
     try {
-        // Fetch history for the given user ID
+        // Fetch the user's play history, including related song and album data
         const history = await PlayHistory.find({ user_id: userId })
-            .populate({
-                path: 'song_id',
-            })
-            .populate({
-                path: 'album_id',
+            .populate('song_id')
+            .populate('album_id');
+
+        if (!history.length) {
+            return res.status(404).json({
+                success: false,
+                message: 'No history found for the user'
             });
+        }
 
-        // Extract unique song IDs from history
-        const songIds = history.map(item => item.song_id._id);
+        // Filter out history items without valid song IDs and extract unique song IDs
+        const songIds = history.filter(item => item.song_id && item.song_id._id)
+                               .map(item => item.song_id._id);
 
-        // Fetch audio and video details for these songs
-        const audios = await Audio.find({ song_id: { $in: songIds } });
-        const videos = await Video.find({ song_id: { $in: songIds } });
+        // Concurrently fetch audio and video details associated with the song IDs
+        const [audios, videos] = await Promise.all([
+            Audio.find({ song_id: { $in: songIds } }),
+            Video.find({ song_id: { $in: songIds } })
+        ]);
 
-        // Create maps to associate song IDs with their respective audio and video
+        // Map audio and video objects for quick lookup
         const audioMap = audios.reduce((map, audio) => {
             map[audio.song_id.toString()] = audio;
             return map;
@@ -867,43 +874,38 @@ getSocials : async (req, res) => {
             return map;
         }, {});
 
-        // Enhance history records with audio and video details, streamline album and song information
+        // Construct the enhanced history records
         const enhancedHistory = history.map(item => ({
             _id: item._id,
             user_id: item.user_id,
             playedAt: item.playedAt,
             createdAt: item.createdAt,
             updatedAt: item.updatedAt,
-            album: {
+            album: item.album_id ? {
                 _id: item.album_id._id,
                 title: item.album_id.title,
                 cover_image: item.album_id.cover_image
-            },
+            } : {},
             song: {
-                audio: audioMap[item.song_id._id.toString()] ? {
-                    ...audioMap[item.song_id._id.toString()]._doc
-                } : {},
-                video: videoMap[item.song_id._id.toString()] ? {
-                    ...videoMap[item.song_id._id.toString()]._doc
-                } : {}
+                audio: item.song_id && audioMap[item.song_id._id.toString()] ? audioMap[item.song_id._id.toString()] : {},
+                video: item.song_id && videoMap[item.song_id._id.toString()] ? videoMap[item.song_id._id.toString()] : {}
             }
         }));
 
-        // Log or respond with the enhanced history
         return res.status(200).json({
             success: true,
             songs: enhancedHistory
         });
-
     } catch (error) {
         console.error("Error retrieving enhanced history:", error);
         return res.status(500).json({
             success: false,
-            message: error.message || 'Internal server error',
-            error: error
+            message: 'Internal server error',
+            error: error.toString()
         });
     }
 },
+
 listeningCount: async(req,res)=>{
   try {
     const artistId = req.params.artistId;

@@ -16,12 +16,14 @@ const likeSongRouter = require("./likedSongs");
 const chatRouter = require("./chat");
 const shopRouter = require("./shop");
 const socialRouter = require("./social");
+const preferenceRouter = require("./preference");
 
 
 router.use('/v1/users', userRouter);
 router.use('/v1/playlist', playlistRouter);
 router.use('/v1/like', likeSongRouter);
 router.use('/genre', genreRouter);
+router.use('/preference', preferenceRouter);
 router.use('/admin', adminRouter);
 router.use('/label', labelRouter);
 router.use('/role', roleRouter);

@@ -16,6 +16,7 @@ router.post("/adminVerify",controller.adminVerify)
 router.post("/adminReset",controller.resetPassword)
 router.post("/adminUpdate",authPolicy,controller.updateAdmin)
 router.post("/createActions", controller.createActions);
+router.post("/getAllAlbumsLabel", controller.getLabelAlbumsForAdmin);
 router.get("/getActions", controller.getActions);
 router.get("/getAllActions", authPolicy,controller.ppermissionsGet);
 router.get("/getAllLabels",authPolicy ,controller.getAllLabels);

@@ -327,7 +327,7 @@ module.exports = {
           }
         };
 
-        return res.status(200).send({ message: "User exist", user: findUser, token: access_token, success: true })
+        return res.status(200).send({ msg: "Login successful", user: findUser, access_token, success: true })
       } else {
         const newUser = new Users({
           email: user.email,
@@ -352,7 +352,7 @@ module.exports = {
             imageUrl: savedUser.image,
           }
         };
-        return res.status(201).json({ message: "User created", user: savedUser, token: access_token, success: true });
+        return res.status(201).json({msg: "Login successful", user: savedUser,access_token, success: true });
       }
 
     } catch (error) {
@@ -398,7 +398,7 @@ module.exports = {
             imageUrl: user.image,
           }
         };
-        return res.status(200).send({ message: "User exist",user: user ,token: access_token, success: true })
+        return res.status(200).send({msg: "Login successful",user: user ,access_token, success: true })
 
       } else {
         console.log("insideelseeee")
@@ -425,7 +425,7 @@ module.exports = {
             imageUrl: savedUser.image,
           }
         };
-        return res.status(201).json({ message: "User created", user: newUser,token: access_token, success: true });
+        return res.status(201).json({ msg: "Login successful", user: newUser,access_token, success: true });
       }
     } catch (error) {
       console.log('Error', error);

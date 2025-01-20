@@ -963,5 +963,100 @@ listeningCount: async(req,res)=>{
     console.error("Failed to retrieve song play counts:", error);
     return res.status(500).json({ message: "Internal server error" });
 }
+},
+artistSongs: async(req, res) => {
+  const userId = req.token._id;
+  try {
+      const { artistId } = req.body;
+      // Fetch user albums
+      const userAlbums = await UserAlbum.findOne({ user_id: userId });
+      if (!userAlbums || userAlbums.album_id.length === 0) {
+        return res.status(404).json({ 
+          success:true,
+            message: "No albums found for user.",
+            songs: [{
+                likedBy: [],
+                _id: null,
+                label_id: null,
+                genre_id: null,
+                song_type: null,
+                createdAt: null,
+                updatedAt: null,
+                __v: 0,
+                audio: null,
+                video: null
+            }]
+        });
+    }
+
+      // Fetch albums, optionally filtered by artist ID
+      let query = { _id: { $in: userAlbums.album_id } };
+      if (artistId) {
+          query['artist_id'] = artistId;
+      }
+      console.log("query", query);
+      const albums = await Album.find(query)
+                                .populate({
+                                    path: 'songs_id',
+                                    populate: [{ path: 'genre_id' }]
+                                });
+      
+                                if (albums.length === 0) {
+                                  return res.status(404).json({ 
+                                      message: "No albums found.",
+                                      success:true,
+                                      songs: [{
+                                          likedBy: [],
+                                          _id: null,
+                                          label_id: null,
+                                          genre_id: null,
+                                          song_type: null,
+                                          createdAt: null,
+                                          updatedAt: null,
+                                          __v: 0,
+                                          audio: null,
+                                          video: null
+                                      }]
+                                  });
+                              }
+
+      // Extract song IDs from albums
+      const songIds = albums.flatMap(album => album.songs_id.map(song => song._id));
+      
+      // Fetch audio and video details for songs
+      const audios = await Audio.find({ song_id: { $in: songIds } });
+      const videos = await Video.find({ song_id: { $in: songIds } });
+
+      // Maps to associate song IDs with their respective audio and video
+      const audioMap = audios.reduce((map, audio) => {
+          map[audio.song_id.toString()] = audio;
+          return map;
+      }, {});
+
+      const videoMap = videos.reduce((map, video) => {
+          map[video.song_id.toString()] = video;
+          return map;
+      }, {});
+
+      // Prepare songs with their audio and video details
+      let allSongs = [];
+      albums.forEach(album => {
+          album.songs_id.forEach(song => {
+              allSongs.push({
+                  ...song._doc,
+                  audio: audioMap[song._id.toString()],
+                  video: videoMap[song._id.toString()]
+              });
+          });
+      });
+
+      return res.status(200).json({ songs: allSongs, success: true });
+  } catch (error) {
+      console.error('Error fetching user media:', error);
+      return res.status(500).send({ message: 'Error fetching media', error: error.message });
+  }
 }
+
+
+
 };

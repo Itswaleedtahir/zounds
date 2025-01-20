@@ -2,11 +2,11 @@ const Admin = require("../models/dashboardUsers")
 const Song = require("../models/song")
 const Audio = require("../models/audio")
 const Video = require("../models/video")
-const User = require("../models/user")
-const Role = require('../models/role'); 
+const User = require("../models/user") 
 const Artist = require("../models/artist")
 const Event = require("../models/event")
 const News = require("../models/news")
+const Role = require("../models/role")
 const Photo = require("../models/photo")
 const Album = require("../models/album")
 const NFC = require("../models/nfc")
@@ -715,6 +715,19 @@ return res.json(response);
   } catch (error) {
     console.error("Failed to fetch stats", error);
     return res.status(500).json({ message: "Failed to fetch statistics" });
+  }
+},
+getLabelAlbumsForAdmin: async(req,res)=>{
+  const labelId = req.body.label_id; // Get label_id from query string
+  if (!labelId) {
+      return res.status(400).send('Label ID is required');
+  }
+
+  try {
+      const albums = await Album.find({ label_id: labelId }).exec();
+      res.json(albums);
+  } catch (error) {
+      res.status(500).send(error.message);
   }
 }
 }

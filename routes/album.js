@@ -12,6 +12,7 @@ router.post("/createAlbum",authPolicy,checkPermission("Albums,Add"),controller.c
 router.get("/getAllAlbum",authPolicy,checkPermission("Albums,View"),controller.getAlbums)
 router.get("/getRecentAlbum",authPolicy,controller.getRecentAlbums)
 router.get("/getAllAlbumsApp",authPolicy,controller.getAllRedeemedAlbums)
+router.get("/getAlbums",authPolicy,controller.getAllAlbums)
 router.get("/getSingleAlbum/:albumId",authPolicy,checkPermission("Albums,View"),controller.getSingleAlbum)
 router.get("/getSingleAlbumApp/:albumId",authPolicy,controller.getSingleAlbumApp)
 // router.put("/updateGenre/:id",authPolicy,checkPermission("Genres,Update"),controller.updateGenre)

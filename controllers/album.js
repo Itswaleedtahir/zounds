@@ -163,27 +163,30 @@ module.exports = {
         }
     },
     getRecentAlbums: async (req, res) => {
-        const userId = req.token._id
+        const userId = req.token._id;
         try {
-            // Calculate the time 5 hours ago from now
-            // const fiveHoursAgo = new Date(Date.now() - 5 * 60 * 60 * 1000);
-    
             // Fetch albums created within the last 5 hours
             const recentAlbums = await Album.find()
-            .populate('artist_id', 'name') // Populate only the name field from artist_id
-            .sort({ createdAt: -1 })
-            .limit(5);
+                .populate('artist_id', 'name') // Populate only the name field from artist_id
+                .sort({ createdAt: -1 })
+                .limit(5);
     
-            // Transform data to include artistName (only name) and omit artist_id
+            // Fetch redeemed albums for the user
+            const userAlbums = await userAlbum.findOne({ user_id: userId });
+            const redeemedAlbumIds = userAlbums ? userAlbums.album_id : [];
+    
+            // Transform data to include artistName and isRedeemed
             const transformedAlbums = recentAlbums.map(album => {
                 const artistName = album.artist_id[0] ? album.artist_id[0].name : '';
+                const isRedeemed = redeemedAlbumIds.includes(album._id.toString());
     
-                // Destructure to exclude artist_id and include artistName in output
+                // Destructure to exclude artist_id and include artistName and isRedeemed in output
                 const { artist_id, ...rest } = album._doc;
                 return {
                     ...rest,
-                    user_id:userId,
-                    artistName: artistName  // Only include the artist's name
+                    user_id: userId,
+                    artistName: artistName,
+                    isRedeemed: isRedeemed  // Include redemption status
                 };
             });
     
@@ -200,6 +203,7 @@ module.exports = {
             });
         }
     },
+    
     
     
         getSingleAlbumApp: async (req, res) => {

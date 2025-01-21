@@ -163,6 +163,7 @@ module.exports = {
         }
     },
     getRecentAlbums: async (req, res) => {
+        const userId = req.token._id
         try {
             // Calculate the time 5 hours ago from now
             // const fiveHoursAgo = new Date(Date.now() - 5 * 60 * 60 * 1000);
@@ -181,6 +182,7 @@ module.exports = {
                 const { artist_id, ...rest } = album._doc;
                 return {
                     ...rest,
+                    user_id:userId,
                     artistName: artistName  // Only include the artist's name
                 };
             });

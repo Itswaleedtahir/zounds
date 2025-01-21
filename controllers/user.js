@@ -699,67 +699,75 @@ getSocials : async (req, res) => {
   },
   getRedeemedAlbums: async (req, res) => {
     const { albumId } = req.params;
-    const userId = req.token._id
-    try {
-      console.log("user", userId)
-      // Check if the user has access to this album
-      // Check if the user has access to this album
-      const userAlbums = await UserAlbum.findOne({ user_id: userId });
-      const album = await Album.findById(albumId)
-        .populate('songs_id')
-        .populate('label_id')
-        .populate('photos_id')
-        .populate({
-          path: 'artist_id',  // Correctly accessing the array of artist IDs
-          model: 'Artist',
-          populate: {
-            path: 'userId',   // The field in Artist schema that references Dashboarduser
-            model: 'Dashboarduser'
-          }    // Explicitly specifying the model might help if the ref is not being recognized
-        })
-
-      if (!album) {
-        return res.status(404).send({ message: 'No album found with that ID', success: false });
-      }
-
-      
-
-      // Extract song IDs from the single album
-      const songIds = album.songs_id.map(song => song._id);
-
-      // Fetch audio and video details for songs in this album
-      const audios = await Audio.find({ song_id: { $in: songIds } });
-      const videos = await Video.find({ song_id: { $in: songIds } });
-
-      // Maps to associate song IDs with their respective audio and video
-      const audioMap = audios.reduce((map, audio) => {
-        map[audio.song_id.toString()] = audio;
-        return map;
-      }, {});
-
-      const videoMap = videos.reduce((map, video) => {
-        map[video.song_id.toString()] = video;
-        return map;
-      }, {});
-
-      // Enhance the album's songs with audio and video details
-      const enhancedSongs = album.songs_id.map(song => ({
-        ...song._doc,
-        audio: audioMap[song._id.toString()],
-        video: videoMap[song._id.toString()]
-      }));
-
-      // Return the enhanced album
-      const enhancedAlbum = {
-        ...album._doc,
-        songs_id: enhancedSongs
-      };
-      return res.status(200).json({ Album: enhancedAlbum, success: true });
-
-    } catch (error) {
-      console.error('Error fetching album:', error);
-      return res.status(500).send({ message: 'Error fetching album', error: error.message });
-    }
+            const userId = req.token._id;
+        
+            try {
+                console.log("user", userId);
+                const userAlbums = await UserAlbum.findOne({ user_id: userId });
+                const album = await Album.findById(albumId)
+                    .populate('songs_id')
+                    .populate('label_id')
+                    .populate('photos_id')
+                    .populate({
+                        path: 'artist_id',
+                        model: 'Artist',
+                        populate: {
+                            path: 'userId',
+                            model: 'Dashboarduser'
+                        }
+                    });
+        
+                if (!album) {
+                    return res.status(404).send({ message: 'No album found with that ID', success: false });
+                }
+        
+                console.log(album);
+        
+                const songIds = album.songs_id.map(song => song._id);
+                const audios = await Audio.find({ song_id: { $in: songIds } });
+                const videos = await Video.find({ song_id: { $in: songIds } });
+        
+                const audioMap = audios.reduce((map, audio) => {
+                    map[audio.song_id.toString()] = audio;
+                    return map;
+                }, {});
+        
+                const videoMap = videos.reduce((map, video) => {
+                    map[video.song_id.toString()] = video;
+                    return map;
+                }, {});
+        
+                const isRedeemed = userAlbums && userAlbums.album_id && userAlbums.album_id.includes(albumId);
+        
+                const enhancedSongs = album.songs_id.map(song => {
+                    const likedByCurrentUser = song.likedBy.includes(userId);
+                    const songData = {
+                        ...song._doc,
+                        liked: isRedeemed && likedByCurrentUser, // Set liked flag based on redemption status
+                    };
+                    delete songData.likedBy;  // Remove the likedBy array from the response
+                    if (isRedeemed) {
+                        songData.audio = audioMap[song._id.toString()];
+                        songData.video = videoMap[song._id.toString()];
+                    }
+        
+                    return songData;
+                });
+        
+                console.log("redeemed", isRedeemed);
+        
+                const enhancedAlbum = {
+                  user_id:userId,
+                    ...album._doc,
+                    songs_id: enhancedSongs,
+                };
+        
+                return res.status(200).json({ Album: enhancedAlbum, success: true, redeemed: isRedeemed });
+        
+            } catch (error) {
+                console.error('Error fetching album:', error);
+                return res.status(500).send({ message: 'Error fetching album', error: error.message });
+            }
   },
   getAllArtists: async (req, res) => {
     try {

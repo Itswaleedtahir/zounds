@@ -107,7 +107,7 @@ module.exports = {
         if (!req.files.file) {
             return res.status(400).send('No file uploaded.');
         }
-    
+        const {bodyLabelId} = req.body
         let label_id;
         let labelUser;
         let labelName = ''; // To store the label name

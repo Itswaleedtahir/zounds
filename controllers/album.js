@@ -200,7 +200,7 @@ module.exports = {
     },
     
     
-    getSingleAlbumApp: async (req, res) => {
+        getSingleAlbumApp: async (req, res) => {
         const { albumId } = req.params;
         const userId = req.token._id;
     

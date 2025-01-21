@@ -20,7 +20,7 @@ var nfcSchema = new Schema({
     type:String
    },
    activationDate:{
-    type:String
+    type:Date
    },
    status:{
     type: String

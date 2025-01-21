@@ -202,10 +202,7 @@ module.exports = {
                 message: error.message || 'Internal server error'
             });
         }
-    },
-    
-    
-    
+    },    
         getSingleAlbumApp: async (req, res) => {
         const { albumId } = req.params;
         const userId = req.token._id;
@@ -295,5 +292,45 @@ module.exports = {
             res.status(500).json({ message: 'Failed to fetch albums', error: error.message || 'Something went wrong.', success: false });
         }
 
-    }
+    },
+    getAllAlbums: async (req, res) => {
+        const userId = req.token._id;
+        try {
+            // Fetch albums created within the last 5 hours
+            const recentAlbums = await Album.find()
+                .populate('artist_id', 'name') // Populate only the name field from artist_id
+                .sort({ createdAt: -1 })
+    
+            // Fetch redeemed albums for the user
+            const userAlbums = await userAlbum.findOne({ user_id: userId });
+            const redeemedAlbumIds = userAlbums ? userAlbums.album_id : [];
+    
+            // Transform data to include artistName and isRedeemed
+            const transformedAlbums = recentAlbums.map(album => {
+                const artistName = album.artist_id[0] ? album.artist_id[0].name : '';
+                const isRedeemed = redeemedAlbumIds.includes(album._id.toString());
+    
+                // Destructure to exclude artist_id and include artistName and isRedeemed in output
+                const { artist_id, ...rest } = album._doc;
+                return {
+                    ...rest,
+                    user_id: userId,
+                    artistName: artistName,
+                    redeemed: isRedeemed  // Include redemption status
+                };
+            });
+    
+            return res.status(200).json({
+                success: true,
+                count: transformedAlbums.length,
+                data: transformedAlbums
+            });
+        } catch (error) {
+            console.error("Error retrieving recent albums:", error);
+            return res.status(500).json({
+                success: false,
+                message: error.message || 'Internal server error'
+            });
+        }
+    },
 }

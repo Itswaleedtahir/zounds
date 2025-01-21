@@ -350,6 +350,65 @@ module.exports = {
             console.error('Error verifying NFC:', error);
             return res.status(500).send({ message: "Error verifying NFC." });
         }
+    },
+    searchNfc: async(req,res)=>{
+        try {
+            // Pagination parameter from query string with only page adjustable
+            const { page  } = req.query;
+            const limit = 10; // Hard-coded limit for pagination
+    
+            // Search parameters from request body
+            const { label_id, album_id, activationFrom, activationTo } = req.body;
+    
+            // Calculate the 'skip' value for pagination
+            const skip = (page - 1) * limit;
+    
+            // Build the query object from the request body
+            let query = {
+                label_id: label_id,
+                album_id: album_id
+            };
+    
+          // Handle timezone offset for Pakistan Standard Time (UTC+5)
+        const timezoneOffset = 5 * 60 * 60 * 1000; // 5 hours in milliseconds
+         // Date filtering logic
+         if (activationFrom && activationTo) {
+            const startDate = new Date(new Date(activationFrom).getTime() + timezoneOffset);
+            startDate.setUTCHours(0, 0, 0, 0); // Set start of day in UTC+5
+            const endDate = new Date(new Date(activationTo).getTime() + timezoneOffset);
+            endDate.setUTCHours(23, 59, 59, 999); // Set end of day in UTC+5
+
+            query.activationDate = {
+                $gte: startDate,
+                $lte: endDate
+            };
+        }
+            console.log("query",query)
+    
+            // Find records with pagination
+            const records = await NFC.find(query)
+                .populate('label_id album_id')
+                .skip(skip)
+                .limit(limit);
+    
+            // Count the total records for pagination data
+            const total = await NFC.countDocuments(query);
+    
+            res.status(200).json({
+                success: true,
+                count: records.length,
+                total: total,
+                pages: Math.ceil(total / limit),
+                currentPage: parseInt(page),
+                data: records
+            });
+        } catch (error) {
+            res.status(500).json({
+                success: false,
+                message: 'Server Error',
+                error: error.message
+            });
+        }
     }
     
 }

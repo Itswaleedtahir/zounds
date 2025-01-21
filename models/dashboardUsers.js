@@ -37,6 +37,7 @@ var user = new Schema({
     },
     profileImage:{
         type:String,
+        default:""
     },
     updatedAt: {
         type: Date,

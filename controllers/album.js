@@ -186,7 +186,7 @@ module.exports = {
                     ...rest,
                     user_id: userId,
                     artistName: artistName,
-                    isRedeemed: isRedeemed  // Include redemption status
+                    redeemed: isRedeemed  // Include redemption status
                 };
             });
     

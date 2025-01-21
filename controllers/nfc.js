@@ -160,10 +160,15 @@ module.exports = {
             });
     },
        
-    getAllNfcs: async(req,res)=>{
+    getAllNfcs: async(req,res) => {
         const userRole = req.token.role.toString().toUpperCase();
         const userId = req.token._id; // User's ID from the token
         const createdBy = req.token.createdBy; // For LABEL_STAFF to find their label
+        
+        // Default page and limit parameters from the request, or use defaults
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10; // Default to 10 records per page if not specified
+        const skip = (page - 1) * limit; // Calculate skip
     
         try {
             let query = {};
@@ -180,14 +185,29 @@ module.exports = {
             } else {
                 return res.status(403).send({ message: 'Unauthorized access' });
             }
+        
+            // Fetch records with pagination
+            const nfcRecords = await NFC.find(query)
+                                        .populate('label_id')
+                                        .populate('album_id')
+                                        .skip(skip)
+                                        .limit(limit);
     
-            const nfcRecords = await NFC.find(query).populate('label_id').populate('album_id');
-           return res.status(200).send(nfcRecords);
+            // Count total records for pagination metadata
+            const totalRecords = await NFC.countDocuments(query);
+    
+            return res.status(200).send({
+                totalRecords: totalRecords,
+                pages: Math.ceil(totalRecords / limit),
+                currentPage: page,
+                nfcRecords: nfcRecords
+            });
         } catch (error) {
-            console.log("error",error)
+            console.log("error", error)
             return res.status(500).send({ message: 'Error fetching NFC records', error: error.message });
         }
     },
+    
     updateNfc : async(req,res)=>{
         const { status } = req.body; // Expected to be 'active' or 'not active'
         
@@ -212,11 +232,16 @@ module.exports = {
           return  res.status(500).send({ message: 'Error updating NFC status', error: error.message });
         }
     },
-    getNfcsOnStatus: async(req,res)=>{
+    getNfcsOnStatus: async(req,res) => {
         const { isActive, isMapped } = req.query; // Expects isActive as 'true' or 'false', isMapped as 'true', 'false', or 'null' for inactive
         const userRole = req.token.role.toString().toUpperCase();
         const userId = req.token._id;
         const createdBy = req.token.createdBy;
+    
+        // Pagination setup
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
     
         try {
             let query = {};
@@ -245,13 +270,27 @@ module.exports = {
                 }
             }
     
-            // Fetch the NFC records based on the constructed query
-            const nfcRecords = await NFC.find(query).populate('label_id').populate('album_id');
-            res.status(200).send(nfcRecords);
+            // Fetch the NFC records based on the constructed query with pagination
+            const nfcRecords = await NFC.find(query)
+                                        .populate('label_id')
+                                        .populate('album_id')
+                                        .skip(skip)
+                                        .limit(limit);
+    
+            // Count total records for pagination metadata
+            const totalRecords = await NFC.countDocuments(query);
+    
+            res.status(200).send({
+                totalRecords: totalRecords,
+                pages: Math.ceil(totalRecords / limit),
+                currentPage: page,
+                nfcRecords: nfcRecords
+            });
         } catch (error) {
-           return res.status(500).send({ message: 'Error fetching NFC records', error: error.message });
+            return res.status(500).send({ message: 'Error fetching NFC records', error: error.message });
         }
-    },
+    }
+,    
     downloadCsv: async(req,res)=>{
         const userRole = req.token.role.toString().toUpperCase();
         const userId = req.token._id; // User's ID from the token
@@ -368,21 +407,21 @@ module.exports = {
                 label_id: label_id,
                 album_id: album_id
             };
-    
-          // Handle timezone offset for Pakistan Standard Time (UTC+5)
-        const timezoneOffset = 5 * 60 * 60 * 1000; // 5 hours in milliseconds
-         // Date filtering logic
-         if (activationFrom && activationTo) {
-            const startDate = new Date(new Date(activationFrom).getTime() + timezoneOffset);
-            startDate.setUTCHours(0, 0, 0, 0); // Set start of day in UTC+5
-            const endDate = new Date(new Date(activationTo).getTime() + timezoneOffset);
-            endDate.setUTCHours(23, 59, 59, 999); // Set end of day in UTC+5
-
-            query.activationDate = {
-                $gte: startDate,
-                $lte: endDate
-            };
-        }
+            if (activationFrom && activationTo) {
+                // Parse the dates from strings and adjust to UTC+5
+                const startOfDay = new Date(activationFrom);
+                startOfDay.setUTCHours(19, 0, 0, 0); // Adjust for UTC+5 by setting UTC hours to 19:00 of the previous day
+            
+                const endOfDay = new Date(activationTo);
+                endOfDay.setUTCHours(18, 59, 59, 999); // Adjust for UTC+5 by setting UTC hours to 18:59:59.999 of the actual end day
+            
+                query.activationDate = {
+                    $gte: startOfDay,
+                    $lte: endOfDay
+                };
+            }
+              
+            
             console.log("query",query)
     
             // Find records with pagination
@@ -396,11 +435,10 @@ module.exports = {
     
             res.status(200).json({
                 success: true,
-                count: records.length,
-                total: total,
+                totalRecords: total,
                 pages: Math.ceil(total / limit),
                 currentPage: parseInt(page),
-                data: records
+                nfcRecords: records
             });
         } catch (error) {
             res.status(500).json({

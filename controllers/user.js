@@ -67,7 +67,7 @@ module.exports = {
         return res.status(401).json({ msg: "Invalid OTP", success: false });
       }
       user.isVerified = true;
-      user.otp = null;
+      user.otp = "";
       await user.save();
 
       return res.status(200).json({ msg: "User verified successfully", success: true });

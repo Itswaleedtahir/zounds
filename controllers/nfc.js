@@ -349,20 +349,48 @@ module.exports = {
         try {
             const nfcRecord = await NFC.findOne({ token: token });
             if (!nfcRecord) {
-                return res.status(200).json({ message: "NFC record not found.",data:{} ,success : false });
+                return res.status(200).json({ message: "NFC record not found.",data:{
+                    "_id": "",
+                    "user_id": "",
+                    "__v": "",
+                    "album_id": "",
+                    "createdAt": "",
+                    "updatedAt": ""
+                } ,success : false });
             }
     
             // Check if NFC is already used
             if (nfcRecord.mapped) {
-                return res.status(200).json({ message: "This NFC has already been used.",data:{} ,success : false });
+                return res.status(200).json({ message: "This NFC has already been used.",data:{
+                    "_id": "",
+                    "user_id": "",
+                    "__v": "",
+                    "album_id": "",
+                    "createdAt": "",
+                    "updatedAt": ""
+                } ,success : false });
             }
     
             if (nfcRecord.code !== code || nfcRecord.album_id.toString() !== album_id) {
-                return res.status(200).json({ message: "Invalid code or album ID.",data:{} ,success : false });
+                return res.status(200).json({ message: "Invalid code or album ID.",data:{
+                    "_id": "",
+                    "user_id": "",
+                    "__v": "",
+                    "album_id": "",
+                    "createdAt": "",
+                    "updatedAt": ""
+                } ,success : false });
             }
     
             if (nfcRecord.status !== 'active') {
-                return res.status(200).json({ message: "This NFC is not active.",data:{} ,success : false });
+                return res.status(200).json({ message: "This NFC is not active.",data:{
+                    "_id": "",
+                    "user_id": "",
+                    "__v": "",
+                    "album_id": "",
+                    "createdAt": "",
+                    "updatedAt": ""
+                } ,success : false });
             }
     
             // Update NFC record to marked as mapped

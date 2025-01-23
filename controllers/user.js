@@ -764,7 +764,9 @@ getSocials : async (req, res) => {
                 if(isRedeemed.includes(userAlbums.album_id)){
                   redeemed = true
                 }
+                console.log("album",album)
                 const enhancedAlbum = {
+                  artistName : album.artist_id[0].name,
                   user_id:userId,
                     ...album._doc,
                     songs_id: enhancedSongs,

@@ -231,15 +231,24 @@ module.exports = {
     
         try {
             // Optional: Check if the reaction belongs to the user, if needed
-            const reaction = await Reaction.findById(reactionId);
+            const reaction = await Reaction.findOne({ 
+                _id: reactionId, 
+                user_id: req.token._id 
+            });
+            console.log("react   user", reactionId, req.token._id)
             if (!reaction) {
                 return res.status(404).json({ message: "Reaction not found." ,success:false});
             }
     
-    
+            
             // Delete the reaction
-            await Reaction.deleteOne({ _id: reactionId ,user_id:req.token._id});
-            return res.status(200).json({ message: "Reaction successfully removed." ,success:true});
+            const result = await Reaction.deleteOne({ _id: reactionId ,user_id:req.token._id})
+            if (result.deletedCount === 0) {
+                // No document was deleted
+                return res.status(404).json({ message: "Reaction not found or user not authorized to delete.", success: false });
+            }
+        
+            return res.status(200).json({ message: "Reaction successfully removed." ,success:true})
         } catch (error) {
             console.error('Error deleting reaction:', error);
           return  res.status(500).json({ message: 'Internal server error', error: error.message , success:false});

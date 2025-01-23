@@ -863,6 +863,8 @@ getSocials : async (req, res) => {
             .populate('song_id')
             .populate('album_id');
 
+        console.log("history", history);
+
         if (!history.length) {
             return res.status(404).json({
                 success: false,
@@ -874,75 +876,30 @@ getSocials : async (req, res) => {
         const songIds = history.filter(item => item.song_id && item.song_id._id)
                                .map(item => item.song_id._id);
 
-        // Concurrently fetch audio and video details associated with the song IDs
-        const [audios, videos] = await Promise.all([
-            Audio.find({ song_id: { $in: songIds } }),
-            Video.find({ song_id: { $in: songIds } })
-        ]);
+        // Fetch audio and video details for songs
+        const audios = await Audio.find({ song_id: { $in: songIds } });
+        const videos = await Video.find({ song_id: { $in: songIds } });
 
-        // Map audio and video objects for quick lookup
+        // Maps to associate song IDs with their respective audio and video
         const audioMap = audios.reduce((map, audio) => {
             map[audio.song_id.toString()] = audio;
             return map;
         }, {});
+
         const videoMap = videos.reduce((map, video) => {
             map[video.song_id.toString()] = video;
             return map;
         }, {});
 
-        // Construct the enhanced history records
-        const enhancedHistory = history.map(item => ({
-            _id: item._id,
-            user_id: item.user_id,
-            playedAt: item.playedAt,
-            createdAt: item.createdAt,
-            updatedAt: item.updatedAt,
-            album: item.album_id ? {
-                _id: item.album_id._id,
-                title: item.album_id.title,
-                cover_image: item.album_id.cover_image
-            } : {},
-            song: {
-                audio: item.song_id && audioMap[item.song_id._id.toString()] ? audioMap[item.song_id._id.toString()] : {
-                  _id: "",
-                  song_id: "",
-                  title: "",
-                  audio_quality: "",
-                  lyricsFile: "",
-                  file_path: "",
-                  bit_rate: "",
-                  file_size: {},
-                  duration: "",
-                  createdAt: "",
-                  updatedAt: "",
-                  __v: ""
-              },
-                video: item.song_id && videoMap[item.song_id._id.toString()] ? videoMap[item.song_id._id.toString()] : {
-                  _id: "",
-                  song_id: "",
-                  lyricsFile: "",
-                  title: "",
-                  duration: "",
-                  file_path: "",
-                  thumbnail: "",
-                  resolution: "",
-                  video_format: "",
-                  createdAt: "",
-                  updatedAt: "",
-                  __v: ""
-              }
-            }
+        // Prepare songs with their audio and video details
+        let allSongs = history.map(item => ({
+            ...item.song_id._doc,
+            album: item.album_id,
+            audio: audioMap[item.song_id._id.toString()],
+            video: videoMap[item.song_id._id.toString()]
         }));
 
-        return res.status(200).json({
-            success: true,
-            songs: enhancedHistory.map(song => {
-                // Ensure both audio and video properties are always present
-                song.song.audio = song.song.audio || {};
-                song.song.video = song.song.video || {};
-                return song;
-            })
-        });
+        return res.status(200).json({ songs: allSongs, success: true });
     } catch (error) {
         console.error("Error retrieving enhanced history:", error);
         return res.status(500).json({
@@ -952,6 +909,7 @@ getSocials : async (req, res) => {
         });
     }
 },
+
 
 
 listeningCount: async(req,res)=>{

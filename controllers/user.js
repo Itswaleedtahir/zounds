@@ -1072,31 +1072,52 @@ artistSongs: async(req, res) => {
       return res.status(500).send({ message: 'Error fetching media', error: error.message });
   }
 },
-getSingleSong: async(req,res)=>{
+getSongNames: async(req,res)=>{
   const { id } = req.params;
 
   try {
-      let song = await Song.findById(id)
-          .populate('label_id', 'name') // Populate label details, adjust field as necessary
-          .populate('genre_id', 'name') // Populate genre details, adjust field as necessary
-          .populate('likedBy', 'username'); // Populate users who liked the song, adjust field as necessary
+    const albums = await Album.findById(id)
+                                .populate({
+                                    path: 'songs_id',
+                                    populate: [{ path: 'genre_id' }]
+                                });
 
-      if (!song) {
-          return res.status(404).json({ success: false, message: 'Song not found' });
-      }
+                          
 
-      song = song.toObject(); // Convert Mongoose document to a plain JavaScript object
+        // Extract song IDs from albums
+        console.log("albums",albums)
+        const songIds =albums.songs_id.map(song => song._id);
+      console.log("ids",songIds)
+        // Fetch audio and video details for songs
+        const audios = await Audio.find({ song_id: { $in: songIds } });
+        const videos = await Video.find({ song_id: { $in: songIds } });
+  
+        // Maps to associate song IDs with their respective audio and video
+        const audioMap = audios.reduce((map, audio) => {
+            map[audio.song_id.toString()] = audio;
+            return map;
+        }, {});
+  
+        const videoMap = videos.reduce((map, video) => {
+            map[video.song_id.toString()] = video;
+            return map;
+        }, {});
+  
+        // Prepare songs with their audio and video details
+        let allSongs = [];
+            albums.songs_id.forEach(song => {
+                allSongs.push({
+                    ...song._doc,
+                    audio: audioMap[song._id.toString()],
+                    video: videoMap[song._id.toString()]
+                });
+        });
 
-      // Depending on the song_type, populate with Audio or Video details
-      if (song.song_type === 'audio') {
-          const audioDetails = await Audio.findOne({ song_id: song._id });
-          song = { ...song, audioDetails }; // Merge audio details into the song object
-      } else if (song.song_type === 'video') {
-          const videoDetails = await Video.findOne({ song_id: song._id });
-          song = { ...song, videoDetails }; // Merge video details into the song object
-      }
+         // Extract song names for response
+         const songNames = allSongs.map(song => song.audio ? song.audio.title : song.video ? song.video.title : "Untitled Song");
 
-      res.status(200).json({ success: true, data: song });
+  
+        return res.status(200).json({success: true ,songNames:songNames});
   } catch (error) {
       res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }

@@ -749,7 +749,7 @@ getSocials : async (req, res) => {
                     const likedByCurrentUser = song.likedBy.includes(userId);
                     const songData = {
                         ...song._doc,
-                        liked: isRedeemed && likedByCurrentUser || [], // Set liked flag based on redemption status
+                        liked: isRedeemed && likedByCurrentUser || false, // Set liked flag based on redemption status
                     };
                     delete songData.likedBy;  // Remove the likedBy array from the response
                     if (isRedeemed) {

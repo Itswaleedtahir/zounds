@@ -700,10 +700,16 @@ getSocials : async (req, res) => {
   getRedeemedAlbums: async (req, res) => {
     const { albumId } = req.params;
             const userId = req.token._id;
-        
+
             try {
                 console.log("user", userId);
-                const userAlbums = await UserAlbum.findOne({ user_id: userId });
+                const userAlbums = await UserAlbum.findOne({ 
+                  user_id: userId, 
+                  album_id: albumId  // Assuming albumId is already an ObjectId or both are strings
+                });
+                if(!userAlbums){
+                  return res.status(200).json({success: true, album: {}, message: "This user hasn't redeemed this album", redeemed: false})
+                }
                 const album = await Album.findById(albumId)
                     .populate('songs_id')
                     .populate('label_id')
@@ -736,14 +742,14 @@ getSocials : async (req, res) => {
                     map[video.song_id.toString()] = video;
                     return map;
                 }, {});
-        
-                const isRedeemed = userAlbums && userAlbums.album_id && userAlbums.album_id.includes(albumId);
+                console.log("useral",userAlbums)
+                const isRedeemed = userAlbums && userAlbums.album_id;
         
                 const enhancedSongs = album.songs_id.map(song => {
                     const likedByCurrentUser = song.likedBy.includes(userId);
                     const songData = {
                         ...song._doc,
-                        liked: isRedeemed && likedByCurrentUser, // Set liked flag based on redemption status
+                        liked: isRedeemed && likedByCurrentUser || [], // Set liked flag based on redemption status
                     };
                     delete songData.likedBy;  // Remove the likedBy array from the response
                     if (isRedeemed) {
@@ -753,16 +759,18 @@ getSocials : async (req, res) => {
         
                     return songData;
                 });
-        
+                let redeemed = false
                 console.log("redeemed", isRedeemed);
-        
+                if(isRedeemed.includes(userAlbums.album_id)){
+                  redeemed = true
+                }
                 const enhancedAlbum = {
                   user_id:userId,
                     ...album._doc,
                     songs_id: enhancedSongs,
                 };
         
-                return res.status(200).json({ Album: enhancedAlbum, success: true, redeemed: isRedeemed });
+                return res.status(200).json({ Album: enhancedAlbum, success: true, redeemed: true });
         
             } catch (error) {
                 console.error('Error fetching album:', error);
@@ -1062,6 +1070,35 @@ artistSongs: async(req, res) => {
   } catch (error) {
       console.error('Error fetching user media:', error);
       return res.status(500).send({ message: 'Error fetching media', error: error.message });
+  }
+},
+getSingleSong: async(req,res)=>{
+  const { id } = req.params;
+
+  try {
+      let song = await Song.findById(id)
+          .populate('label_id', 'name') // Populate label details, adjust field as necessary
+          .populate('genre_id', 'name') // Populate genre details, adjust field as necessary
+          .populate('likedBy', 'username'); // Populate users who liked the song, adjust field as necessary
+
+      if (!song) {
+          return res.status(404).json({ success: false, message: 'Song not found' });
+      }
+
+      song = song.toObject(); // Convert Mongoose document to a plain JavaScript object
+
+      // Depending on the song_type, populate with Audio or Video details
+      if (song.song_type === 'audio') {
+          const audioDetails = await Audio.findOne({ song_id: song._id });
+          song = { ...song, audioDetails }; // Merge audio details into the song object
+      } else if (song.song_type === 'video') {
+          const videoDetails = await Video.findOne({ song_id: song._id });
+          song = { ...song, videoDetails }; // Merge video details into the song object
+      }
+
+      res.status(200).json({ success: true, data: song });
+  } catch (error) {
+      res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 }
 };

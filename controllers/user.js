@@ -854,7 +854,7 @@ getSocials : async (req, res) => {
       });
     }
   },
- getHistorySongs: async (req, res) => {
+  getHistorySongs: async (req, res) => {
     const userId = req.token._id;
 
     try {
@@ -903,14 +903,45 @@ getSocials : async (req, res) => {
                 cover_image: item.album_id.cover_image
             } : {},
             song: {
-                audio: item.song_id && audioMap[item.song_id._id.toString()] ? audioMap[item.song_id._id.toString()] : {},
-                video: item.song_id && videoMap[item.song_id._id.toString()] ? videoMap[item.song_id._id.toString()] : {}
+                audio: item.song_id && audioMap[item.song_id._id.toString()] ? audioMap[item.song_id._id.toString()] : {
+                  _id: "",
+                  song_id: "",
+                  title: "",
+                  audio_quality: "",
+                  lyricsFile: "",
+                  file_path: "",
+                  bit_rate: "",
+                  file_size: {},
+                  duration: "",
+                  createdAt: "",
+                  updatedAt: "",
+                  __v: ""
+              },
+                video: item.song_id && videoMap[item.song_id._id.toString()] ? videoMap[item.song_id._id.toString()] : {
+                  _id: "",
+                  song_id: "",
+                  lyricsFile: "",
+                  title: "",
+                  duration: "",
+                  file_path: "",
+                  thumbnail: "",
+                  resolution: "",
+                  video_format: "",
+                  createdAt: "",
+                  updatedAt: "",
+                  __v: ""
+              }
             }
         }));
 
         return res.status(200).json({
             success: true,
-            songs: enhancedHistory
+            songs: enhancedHistory.map(song => {
+                // Ensure both audio and video properties are always present
+                song.song.audio = song.song.audio || {};
+                song.song.video = song.song.video || {};
+                return song;
+            })
         });
     } catch (error) {
         console.error("Error retrieving enhanced history:", error);
@@ -921,6 +952,7 @@ getSocials : async (req, res) => {
         });
     }
 },
+
 
 listeningCount: async(req,res)=>{
   try {

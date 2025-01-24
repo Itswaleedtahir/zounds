@@ -856,21 +856,82 @@ getSocials : async (req, res) => {
       });
     }
   },
-  getHistorySongs: async (req, res) => {
+
+ getHistorySongs: async (req, res) => {
     const userId = req.token._id;
 
     try {
-        // Fetch the user's play history, including related song and album data
         const history = await PlayHistory.find({ user_id: userId })
             .populate('song_id')
             .populate('album_id');
 
-        console.log("history", history);
-
         if (!history.length) {
             return res.status(404).json({
                 success: false,
-                message: 'No history found for the user'
+                message: 'No history found for the user',
+                songs:{
+                  "_id": "",
+                  "label_id": "",
+                  "genre_id": "",
+                  "song_type": "",
+                  "likedBy": [],
+                  "createdAt": "",
+                  "updatedAt": "",
+                  "__v": "",
+                  "album": {
+                      "_id": "",
+                      "artist_id": [
+                          ""
+                      ],
+                      "label_id": [
+                          ""
+                      ],
+                      "songs_id": [
+                          ""
+                      ],
+                      "photos_id": [
+                          ""
+                      ],
+                      "title": "",
+                      "isFeatured": "",
+                      "release_date": "",
+                      "description": "",
+                      "cover_image": "",
+                      "createdAt": "",
+                      "updatedAt": "",
+                      "__v": ""
+                  },
+                  "audio": {
+                      "_id": "",
+                      "song_id": "",
+                      "title": "",
+                      "audio_quality": "",
+                      "lyricsFile": "",
+                      "file_path":"",
+                       "bit_rate": "",
+                      "file_size": {
+                          "$numberDecimal": ""
+                      },
+                      "duration": "",
+                      "createdAt": "",
+                      "updatedAt": "",
+                      "__v": ""
+                  },
+                  "video": {
+                "_id": "",
+                "song_id": "",
+                "lyricsFile": "",
+                "title": "",
+                "duration": "",
+                "file_path": "",
+                "thumbnail": "",
+                "resolution": "",
+                "video_format": "",
+                "createdAt": "",
+                "updatedAt": "",
+                "__v": ""
+            }
+              },
             });
         }
 
@@ -878,28 +939,43 @@ getSocials : async (req, res) => {
         const songIds = history.filter(item => item.song_id && item.song_id._id)
                                .map(item => item.song_id._id);
 
-        // Fetch audio and video details for songs
-        const audios = await Audio.find({ song_id: { $in: songIds } });
-        const videos = await Video.find({ song_id: { $in: songIds } });
+        // Initialize audioMap and videoMap to empty objects
+        let audioMap = {}, videoMap = {};
 
-        // Maps to associate song IDs with their respective audio and video
-        const audioMap = audios.reduce((map, audio) => {
-            map[audio.song_id.toString()] = audio;
-            return map;
-        }, {});
+        // Proceed only if there are valid song IDs
+        if (songIds.length > 0) {
+            const audios = await Audio.find({ song_id: { $in: songIds } });
+            const videos = await Video.find({ song_id: { $in: songIds } });
 
-        const videoMap = videos.reduce((map, video) => {
-            map[video.song_id.toString()] = video;
-            return map;
-        }, {});
+            audioMap = audios.reduce((map, audio) => {
+                map[audio.song_id.toString()] = audio;
+                return map;
+            }, {});
 
-        // Prepare songs with their audio and video details
-        let allSongs = history.map(item => ({
-            ...item.song_id._doc,
-            album: item.album_id,
-            audio: audioMap[item.song_id._id.toString()],
-            video: videoMap[item.song_id._id.toString()]
-        }));
+            videoMap = videos.reduce((map, video) => {
+                map[video.song_id.toString()] = video;
+                return map;
+            }, {});
+        }
+
+        // Prepare songs with their audio and video details, only for valid song_ids
+        let allSongs = history.map(item => {
+            if (item.song_id) {
+                return {
+                    ...item.song_id._doc,
+                    album: item.album_id,
+                    audio: audioMap[item.song_id._id.toString()],
+                    video: videoMap[item.song_id._id.toString()]
+                };
+            } else {
+                // Handle the case where song_id is null
+                return {
+                    album: item.album_id,
+                    audio: null,
+                    video: null
+                };
+            }
+        });
 
         return res.status(200).json({ songs: allSongs, success: true });
     } catch (error) {
@@ -912,65 +988,82 @@ getSocials : async (req, res) => {
     }
 },
 
-
-
-listeningCount: async(req,res)=>{
+listeningCount: async(req, res) => {
   try {
     const artistId = req.params.artistId;
+    // Define the start of the current month
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    // Define the end of the current month
+    const endOfMonth = new Date();
+    endOfMonth.setMonth(endOfMonth.getMonth() + 1);
+    endOfMonth.setDate(0);
+    endOfMonth.setHours(23, 59, 59, 999);
+
     // Find all albums by the artist
     const albums = await Album.find({ artist_id: artistId });
 
     if (albums.length === 0) {
         // Return default response with no songs and count 0
-        return res.status(200).json({playCounts:[{totalUniqueUsers: 0, songs: []}],success:true });
+        return res.status(200).json({
+            playCounts: [{totalUniqueUsers: 0, songs: []}],
+            currentMonthListenerCount: 0,
+            success: true
+        });
     }
 
     // Extract album IDs
     const albumIds = albums.map(album => album._id);
 
-    // Aggregate song histories to count distinct users per song
-    const playCounts = await PlayHistory.aggregate([
+    // Aggregate song histories to count distinct users per song and for the current month
+    const aggregateQuery = [
       {
-          $match: {
-              album_id: { $in: albumIds }
-          }
+        $match: {
+            album_id: { $in: albumIds },
+            playedAt: { $gte: startOfMonth, $lte: endOfMonth }
+        }
       },
       {
-          $group: {
-              _id: "$song_id",
-              uniqueUsers: { $addToSet: "$user_id" }
-          }
+        $group: {
+            _id: "$song_id",
+            uniqueUsers: { $addToSet: "$user_id" }
+        }
       },
       {
-          $project: {
-              song_id: "$_id",
-              uniqueUserCount: { $size: "$uniqueUsers" }
-          }
+        $group: {
+            _id: null,
+            totalUniqueUsers: { $addToSet: "$uniqueUsers" }, // Collect arrays of unique users
+            songs: { $push: { song_id: "$_id" } } // Collect song details
+        }
       },
       {
-          $group: {
-              _id: null,
-              totalUniqueUsers: { $sum: "$uniqueUserCount" },
-              songs: { $push: { song_id: "$song_id"} }
-          }
-      },
-      {
-          $project: {
-              _id: 0, // Exclude the _id field
-              totalUniqueUsers: 1,
-              songs: 1
-          }
+        $project: {
+            _id: 0,
+            totalUniqueUsers: { $size: { $reduce: { input: "$totalUniqueUsers", initialValue: [], in: { $setUnion: ["$$value", "$$this"] } } } },
+            songs: 1
+        }
       }
-  ]);
-  if (playCounts.length === 0) {
-    // If no play counts are found, return default response
-    return res.status(200).json({ playCounts:[{totalUniqueUsers: 0, songs: []}] ,success:true});
-}
-   return res.status(200).json({playCounts,success:true});
-} catch (error) {
+    ];
+
+    const results = await PlayHistory.aggregate(aggregateQuery);
+
+    if (results.length === 0) {
+      // If no results are found, return default response
+      return res.status(200).json({ playCounts: [{ totalUniqueUsers: 0, songs: [] }], currentMonthListenerCount: 0, success: true });
+    }
+
+    const { totalUniqueUsers, songs } = results[0];
+    return res.status(200).json({
+        playCounts: [{ totalUniqueUsers, songs }],
+        currentMonthListenerCount: totalUniqueUsers,
+        success: true
+    });
+  } catch (error) {
     console.error("Failed to retrieve song play counts:", error);
-    return res.status(500).json({ message: "Internal server error" });
-}
+    return res.status(500).json({ message: "Internal server error", error });
+  }
 },
 artistSongs: async(req, res) => {
   const userId = req.token._id;
@@ -1075,9 +1168,13 @@ getSongNames: async(req,res)=>{
                                 });
 
                           
-
-        // Extract song IDs from albums
-        console.log("albums",albums)
+                                if (!albums) {
+                                  return res.status(404).json({ success: false, message: 'Album not found' , songNames:[""]});
+                              }
+ 
+        if (!album.songs_id.length) {
+          return res.status(200).json({ success: true,message:"Album has no songs" ,songNames: [""] });
+      }
         const songIds =albums.songs_id.map(song => song._id);
       console.log("ids",songIds)
         // Fetch audio and video details for songs

@@ -10,7 +10,7 @@ module.exports = {
             if (!message) {
                 return res.status(400).json({ msg: "Please provide a message", success: false });
             }
-    
+            let label_id
             // Assume artist user IDs are stored in the Artist model
             let artist;
             if (req.token.role === 'ARTIST') {
@@ -18,12 +18,14 @@ module.exports = {
                 if (!artist) {
                     return res.status(404).json({ msg: "Artist not found", success: false });
                 }
+                label_id = artist.label_id
+                console.log("label",label_id)
             }
             let artist_id = req.token.role === 'ARTIST' ? artist._id : req.body.artist_id;
             if (req.token.role === 'LABEL' && !artist_id) {
                 return res.status(400).json({ msg: "Label must provide an Artist ID", success: false });
             }
-            let label_id
+            
             const userRole = req.token.role.toString().toUpperCase();
         if (['LABEL', 'LABEL_STAFF'].includes(userRole)) {
           if (userRole === 'LABEL') {
@@ -36,7 +38,7 @@ module.exports = {
           }
       }
             const eventAdd = new Chat({
-                label_id: req.token.role === 'LABEL' || req.token.role==="LABEL_STAFF"? label_id : null,
+                label_id: label_id,
                 artist_id: artist ? artist._id : req.body.artist_id,  // Use found artist ID or expect it from body for labels
                 message:message
             });

@@ -868,7 +868,6 @@ getSocials : async (req, res) => {
         if (!history.length) {
             return res.status(404).json({
                 success: false,
-                message: 'No history found for the user',
                 songs:{
                   "_id": "",
                   "label_id": "",

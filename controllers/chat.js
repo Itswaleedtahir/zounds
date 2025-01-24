@@ -207,7 +207,17 @@ module.exports = {
             "createdAt": "",
             "updatedAt": "",
             "__v": 0,
-            "reactions": []
+            "reactions": [
+                {
+                    "_id": "",
+                    "message_id": "",
+                    "user_id": "",
+                    "emoji": "",
+                    "createdAt": "",
+                    "updatedAt": "",
+                    "__v": ""
+                }
+            ]
 
             }]
             if (!messages.length) {

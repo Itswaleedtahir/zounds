@@ -27,13 +27,15 @@ let methods = {
             });
         }
 
-        let userData = await Admin.findOne({ email: email });
-        if (userData) {
-            return res.status(404).json({
-                msg: "Admin already exists",
-                success: false,
-            });
-        }
+          // Check if email exists in any collection
+          const dashboardUserExists = await Admin.findOne({ email: email });
+          const appUserExists = await User.findOne({ email: email });
+          if (dashboardUserExists || appUserExists) {
+              return res.status(409).json({
+                  msg: "Email already in use",
+                  success: false,
+              });
+          }
 
         // Fetch the role document using the role ID
         let role = await Role.findById(roleId);

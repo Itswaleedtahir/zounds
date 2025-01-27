@@ -23,6 +23,10 @@ var artistSchema = new Schema({
          type: Schema.Types.ObjectId, // Assuming references to Artist documents
         ref: 'Dashboarduser'
     },
+    isDeleted:{
+        type:Boolean,
+        default:false
+    },
     createdAt: {
         type: Date,
         default: Date.now

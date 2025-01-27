@@ -39,6 +39,10 @@ var user = new Schema({
         type:String,
         default:""
     },
+    isDeleted:{
+        type:Boolean,
+        default:false
+    },
     updatedAt: {
         type: Date,
         default: Date.now

@@ -27,6 +27,10 @@ var albumSchema = new Schema({
         type: String,
         required: true
     },
+    isDeleted:{
+        type:Boolean,
+        default:false
+    },
     isFeatured: {
         type:Boolean,
         default:false

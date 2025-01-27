@@ -19,6 +19,7 @@ const Social = require("../models/social")
 const Audio = require("../models/audio")
 const Video = require("../models/video")
 const PlayHistory = require("../models/listeningHistory")
+const Dashboarduser = require("../models/dashboardUsers")
 module.exports = {
   addUser: async (req, res) => {
     try {
@@ -26,10 +27,15 @@ module.exports = {
       if (!email || !password || !name) {
         return res.status(400).json({ msg: "Please provide user data", success: false });
       }
-      let userData = await Users.findOne({ email: email });
-      if (userData) {
-        return res.status(404).json({ msg: "User already exists", success: false });
-      }
+        // Check if email exists in any collection
+        const dashboardUserExists = await Dashboarduser.findOne({ email: email });
+        const appUserExists = await Users.findOne({ email: email });
+        if (dashboardUserExists || appUserExists) {
+            return res.status(409).json({
+                msg: "Email already in use",
+                success: false,
+            });
+        }
 
       // Generate a 4-digit OTP
       const otp = crypto.randomInt(100000, 999999);

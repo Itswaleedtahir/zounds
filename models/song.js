@@ -18,6 +18,10 @@ var songSchema = new Schema({
         enum: ['video', 'audio'],
         required: true
     },
+    isDeleted:{
+        type:Boolean,
+        default:false
+    },
     likedBy:[{
         type: Schema.Types.ObjectId,
         ref: 'User',

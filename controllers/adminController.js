@@ -569,17 +569,32 @@ changePassword: async (req, res) => {
     });
   }
 },
-getCustomers:async(req,res)=>{
+getCustomers: async (req, res) => {
   try {
-    const user = await User.find();
-    if (!user) {
-        return res.status(404).send('User not found.');
-    }
-   return res.status(200).send(user);
-} catch (error) {
-   return res.status(500).send(error);
-}
+      const users = await User.find();
+      if (!users.length) {
+          return res.status(404).send('No users found.');
+      }
+
+      // Map through the users and modify the dob format or set it to "" if null
+      const modifiedUsers = users.map(user => {
+          let userObject = user.toObject();
+          if (userObject.dob && userObject.dob !== null) {
+              // Format the dob field, for example, to ISO string without time (YYYY-MM-DD)
+              userObject.dob = new Date(userObject.dob).toISOString().split('T')[0];
+          } else {
+              // Set the dob field to an empty string if it's null or not set
+              userObject.dob = "";
+          }
+          return userObject;
+      });
+
+      return res.status(200).json(modifiedUsers);
+  } catch (error) {
+      return res.status(500).send(error);
+  }
 },
+
 updateCustomers: async (req, res) => {
   const { firstName, lastName, dob, gender, zipCode } = req.body;
 

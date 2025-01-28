@@ -36,3 +36,4 @@ var shopSchema = new Schema({
 }, { timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' } });
 
 module.exports = mongoose.model('Shop', shopSchema);
+

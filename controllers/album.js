@@ -244,7 +244,6 @@ module.exports = {
             }, {});
     
             const isRedeemed = userAlbums && userAlbums.album_id && userAlbums.album_id.includes(albumId);
-            console.log("isredemmed",isRedeemed)
     
             const enhancedSongs = album.songs_id.map(song => {
                 const likedByCurrentUser = song.likedBy.includes(userId);

@@ -19,7 +19,6 @@ module.exports = {
                     return res.status(404).json({ msg: "Artist not found", success: false });
                 }
                 label_id = artist.label_id
-                console.log("label",label_id)
             }
             let artist_id = req.token.role === 'ARTIST' ? artist._id : req.body.artist_id;
             if (req.token.role === 'LABEL' && !artist_id) {

@@ -117,6 +117,14 @@ adminLogin: async(req, res) => {
               success: false,
           });
       }
+       // Check if the user has been marked as deleted
+       if (admin.isDeleted) {
+        return res.status(401).json({
+            msg: "This account has been disabled. Please contact support.",
+            success: false,
+        });
+    }
+
 
       let match = await utils.comparePassword(password, admin.password);
       if (!match) {
@@ -472,30 +480,28 @@ ppermissionsGet: async(req,res)=>{
   getAllUsers: async(req, res) => {
     try {
         let users;
-        // Assuming you have access to the logged-in user's role from the request, e.g., req.userRole
+        // Assuming you have access to the logged-in user's role from the request, e.g., req.token.role
         const loggedInUserRole = req.token.role;
         const loggedInUserId = req.token._id; // The ID of the logged-in user
-        console.log("req",req.token)
+        console.log("req", req.token);
 
         switch (loggedInUserRole) {
             case "SUPER_ADMIN":
-              users = await Admin.find({ _id: { $ne: loggedInUserId } }).populate("user_role");
-              break;
             case "SUPER_ADMIN_STAFF":
-                // If the user is a SUPER_ADMIN or SUPER_ADMIN_STAFF, show all users except the logged-in user
-                users = await Admin.find({ _id: { $ne: loggedInUserId } }).populate("user_role");
+                // Show all users except the logged-in user and where isDeleted is false
+                users = await Admin.find({ _id: { $ne: loggedInUserId }, isDeleted: false }).populate("user_role");
                 break;
             case "LABEL":
-                // If the user is LABEL, show users created by him
-                users = await Admin.find({ createdBy: loggedInUserId }).populate("user_role");
+                // Show users created by the logged-in LABEL user and where isDeleted is false
+                users = await Admin.find({ createdBy: loggedInUserId, isDeleted: false }).populate("user_role");
                 break;
             case "LABEL_STAFF":
-                // If the user is LABEL_STAFF, get its createdBy ID and show users created by the same createdBy ID
+                // Get the createdBy ID of the logged-in LABEL_STAFF user and show users created by the same createdBy ID, ensuring they are not marked as deleted
                 const currentUser = await Admin.findById(loggedInUserId);
-                users = await Admin.find({ createdBy: currentUser.createdBy }).populate("user_role");
+                users = await Admin.find({ createdBy: currentUser.createdBy, isDeleted: false }).populate("user_role");
                 break;
             default:
-                // Optionally handle other cases or throw an error
+                // Handle cases where the user role does not have permission or is unrecognized
                 return res.status(403).json({
                     msg: "You do not have the required role to access this resource",
                     success: false,
@@ -504,9 +510,11 @@ ppermissionsGet: async(req,res)=>{
 
         return res.send(users);
     } catch (error) {
+        console.log("error", error);
         return res.status(500).send(error);
     }
 }
+
 ,
   getAllLabels: async(req,res)=>{
     try {
@@ -515,7 +523,7 @@ ppermissionsGet: async(req,res)=>{
           return res.status(404).json({ message: 'Role not found' });
       }
 
-      const users = await Admin.find({ user_role: role._id }).populate('user_role');
+      const users = await Admin.find({ user_role: role._id ,isDeleted: false }).populate('user_role');
     return  res.json(users);
   } catch (err) {
       return res.status(500).json({ message: 'Server error', error: err });
@@ -525,7 +533,7 @@ ppermissionsGet: async(req,res)=>{
     try {
         const userId = req.params.id;
         // Fetch all songs associated with this LABEL
-        const songs = await Song.find({ label_id: userId }).populate('genre_id', 'name');
+        const songs = await Song.find({ label_id: userId,isDeleted: false  }).populate('genre_id', 'name');
 
         // Use Promise.all to handle multiple asynchronous operations
         const songsWithMedia = await Promise.all(songs.map(async song => {
@@ -732,39 +740,62 @@ return res.json(response);
     return res.status(500).json({ message: "Failed to fetch statistics" });
 }
 },
-getSingleLableCount:async(req,res)=>{
+getSingleLableCount: async (req, res) => {
   try {
-      const labelId = req.params.id
-      let query = {};
+      const labelId = req.params.id;
+      if (!labelId) {
+          return res.status(400).json({
+              message: "Label ID is required",
+              success: false,
+          });
+      }
 
-// Check if labelId is defined, then update the query to filter by label_id
-if (labelId) {
-    query.label_id = labelId;
-}
-         // Count for each model using the potentially modified query
- // Initialize response object
- let response = {
-  albums: await Album.countDocuments(query),
-  artists: await Artist.countDocuments(query),
-  photos: await Photo.countDocuments(query),
-  events: await Event.countDocuments(query),
-  news: await News.countDocuments(query),
-  songs: {
-      audio: await Song.countDocuments({ ...query, song_type: 'audio' }),
-      video: await Song.countDocuments({ ...query, song_type: 'video' }),
-      total: 0
-  },
-  nfcs: await NFC.countDocuments(query)
-};
-response.songs.total = response.songs.audio + response.songs.video;
+      let baseQuery = { label_id: labelId, isDeleted: false };
+      let eventNewsNfcQuery = { label_id: labelId };  // Query without the isDeleted flag
 
-// Sending response with counts
-return res.json(response);
+      // Consolidate queries for each model using the appropriate query
+      let counts = await Promise.all([
+          Album.countDocuments(baseQuery),
+          Artist.countDocuments(baseQuery),
+          Photo.countDocuments(baseQuery),
+          Event.countDocuments(eventNewsNfcQuery),
+          News.countDocuments(eventNewsNfcQuery),
+          Song.countDocuments({ ...baseQuery, song_type: 'audio' }),
+          Song.countDocuments({ ...baseQuery, song_type: 'video' }),
+          NFC.countDocuments(eventNewsNfcQuery)
+      ]);
+
+      // Constructing the response object with results
+      let response = {
+          albums: counts[0],
+          artists: counts[1],
+          photos: counts[2],
+          events: counts[3],
+          news: counts[4],
+          songs: {
+              audio: counts[5],
+              video: counts[6],
+              total: counts[5] + counts[6]
+          },
+          nfcs: counts[7]
+      };
+
+      // Sending response with counts
+      return res.json({
+          message: "Successfully fetched counts",
+          success: true,
+          data: response
+      });
   } catch (error) {
-    console.error("Failed to fetch stats", error);
-    return res.status(500).json({ message: "Failed to fetch statistics" });
+      console.error("Failed to fetch stats", error);
+      return res.status(500).json({
+          message: "Failed to fetch statistics",
+          error: error,
+          success: false,
+      });
   }
-},
+}
+,
 getLabelAlbumsForAdmin: async(req,res)=>{
   const labelId = req.body.label_id; // Get label_id from query string
   if (!labelId) {
@@ -772,7 +803,7 @@ getLabelAlbumsForAdmin: async(req,res)=>{
   }
 
   try {
-      const albums = await Album.find({ label_id: labelId }).exec();
+      const albums = await Album.find({ label_id: labelId,isDeleted:false }).exec();
       res.json(albums);
   } catch (error) {
       res.status(500).send(error.message);

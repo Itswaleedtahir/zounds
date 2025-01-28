@@ -137,7 +137,7 @@ let methods = {
           }
       }
             // Fetch all songs associated with this LABEL
-            const songs = await Song.find({ label_id: label_id }).populate('genre_id', 'name');
+            const songs = await Song.find({ label_id: label_id, isDeleted:false }).populate('genre_id', 'name');
     
             // Use Promise.all to handle multiple asynchronous operations
             const songsWithMedia = await Promise.all(songs.map(async song => {
@@ -243,14 +243,14 @@ let methods = {
             let query = {};
             if (userRole === 'SUPER_ADMIN') {
                 // SUPER_ADMIN can see all NFC records
-                query = {};
+                query = {isDeleted:false};
             } else if (userRole === 'LABEL') {
                 // LABEL can only see their own NFC records
-                query = { label_id: userId };
+                query = { label_id: userId,isDeleted:false };
             } else if (userRole === 'LABEL_STAFF') {
                 // LABEL_STAFF can see NFC records for their label
                 // Assuming `createdBy` field in token stores the LABEL's user ID
-                query = { label_id: createdBy };
+                query = { label_id: createdBy,isDeleted:false };
             } else {
                 return res.status(403).send({ message: 'Unauthorized access' });
             }
@@ -367,7 +367,7 @@ return res.status(200).send(artists)
   deleteAlbum: async(req,res)=>{
     try {
         const { id } = req.params;
-        const album = await Album.findByIdAndDelete(id);
+        const album = await Album.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
 
         if (!album) {
             return res.status(404).send({ message: 'Album not found' });
@@ -382,6 +382,7 @@ return res.status(200).send(artists)
     const { id } = req.params;
 
     try {
+      console.log("id", id)
         const artist = await Artist.findById(id);
         if (!artist) {
             return res.status(404).send({ message: 'Artist not found' });
@@ -389,17 +390,17 @@ return res.status(200).send(artists)
 
         // Delete the Dashboarduser associated with the artist
         if (artist.userId) {
-            await Admin.findByIdAndDelete(artist.userId);
+            await Admin.findByIdAndUpdate(artist.userId, { isDeleted: true }, { new: true })
         }
 
         // Remove artist from albums
-        await Album.updateMany(
-            { artist_id: artist._id },
-            { $pull: { artist_id: artist._id } }
-        );
+        // await Album.updateMany(
+        //     { artist_id: artist._id },
+        //     { $pull: { artist_id: artist._id } }
+        // );
 
         // Finally, delete the artist
-        await Artist.findByIdAndDelete(id);
+        await Artist.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
 
         res.status(200).send({ message: 'Artist and associated data deleted successfully' });
     } catch (error) {
@@ -418,18 +419,18 @@ return res.status(200).send(artists)
         }
 
         // Remove the song's ID from any albums
-        await Album.updateMany(
-            { songs_id: song._id },
-            { $pull: { songs_id: song._id } }
-        );
+        // await Album.updateMany(
+        //     { songs_id: song._id },
+        //     { $pull: { songs_id: song._id } }
+        // );
 
         // Delete associated Audio documents
-        await Audio.deleteMany({ song_id: song._id });
+        // await Audio.deleteMany({ song_id: song._id });
 
-        // Delete associated Video documents
-        await Video.deleteMany({ song_id: song._id });
+        // // Delete associated Video documents
+        // await Video.deleteMany({ song_id: song._id });
          // Finally, delete the artist
-         await Song.findByIdAndDelete(songId);
+         await Song.findByIdAndUpdate(songId, { isDeleted: true }, { new: true });
       return  res.status(200).send({ message: 'Song and all associated data deleted successfully' });
     } catch (error) {
         console.error('Failed to delete song and associated data:', error);
@@ -491,7 +492,7 @@ if (['LABEL', 'LABEL_STAFF'].includes(userRole)) {
   }
 }
     try {
-      const photos = await Photo.find({label_id});
+      const photos = await Photo.find({label_id,isDeleted:false});
       return res.status(200).json(photos);
   } catch (error) {
       return res.status(500).json({ message: error.message });
@@ -521,7 +522,7 @@ if (['LABEL', 'LABEL_STAFF'].includes(userRole)) {
   deletePhoto: async(req,res)=>{
     try {
       const photoId = req.params.id;
-      const photo = await Photo.findByIdAndDelete(photoId);
+      const photo = await Photo.findByIdAndUpdate(photoId, { isDeleted: true }, { new: true });;
 
       if (!photo) {
           return res.status(404).json({ message: 'Photo not found' });

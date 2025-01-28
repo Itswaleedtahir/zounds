@@ -102,7 +102,6 @@ module.exports = {
         const eventId = req.params.id;
         try {
             const { title, venue, date, time, description, shopLink, image, isActive } = req.body;
-            console.log("body", req.body);
             const eventItem = await Events.findOne({_id: eventId});
     
             // Explicitly check if each property is provided before updating

@@ -20,3 +20,4 @@ var actionSchema = new Schema({
 }, { timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' } });
 
 module.exports = mongoose.model('Action', actionSchema);
+

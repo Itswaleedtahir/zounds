@@ -469,14 +469,45 @@ ppermissionsGet: async(req,res)=>{
       res.status(500).json({ message: 'Error updating user', error });
   }
   },
-  getAllUsers: async(req,res)=>{
+  getAllUsers: async(req, res) => {
     try {
-      const users = await Admin.find({ _id: { $ne: req.token._id } }).populate("user_role");
-     return res.send(users);
-  } catch (error) {
-     return res.status(500).send(error);
-  }
-  },
+        let users;
+        // Assuming you have access to the logged-in user's role from the request, e.g., req.userRole
+        const loggedInUserRole = req.token.role;
+        const loggedInUserId = req.token._id; // The ID of the logged-in user
+        console.log("req",req.token)
+
+        switch (loggedInUserRole) {
+            case "SUPER_ADMIN":
+              users = await Admin.find({ _id: { $ne: loggedInUserId } }).populate("user_role");
+              break;
+            case "SUPER_ADMIN_STAFF":
+                // If the user is a SUPER_ADMIN or SUPER_ADMIN_STAFF, show all users except the logged-in user
+                users = await Admin.find({ _id: { $ne: loggedInUserId } }).populate("user_role");
+                break;
+            case "LABEL":
+                // If the user is LABEL, show users created by him
+                users = await Admin.find({ createdBy: loggedInUserId }).populate("user_role");
+                break;
+            case "LABEL_STAFF":
+                // If the user is LABEL_STAFF, get its createdBy ID and show users created by the same createdBy ID
+                const currentUser = await Admin.findById(loggedInUserId);
+                users = await Admin.find({ createdBy: currentUser.createdBy }).populate("user_role");
+                break;
+            default:
+                // Optionally handle other cases or throw an error
+                return res.status(403).json({
+                    msg: "You do not have the required role to access this resource",
+                    success: false,
+                });
+        }
+
+        return res.send(users);
+    } catch (error) {
+        return res.status(500).send(error);
+    }
+}
+,
   getAllLabels: async(req,res)=>{
     try {
       const role = await Role.findOne({ role: 'LABEL' });

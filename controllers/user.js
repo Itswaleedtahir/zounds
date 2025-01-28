@@ -1177,7 +1177,7 @@ getSongNames: async(req,res)=>{
                                   return res.status(404).json({ success: false, message: 'Album not found' , songNames:[""]});
                               }
  
-        if (!album.songs_id.length) {
+        if (!albums.songs_id.length) {
           return res.status(200).json({ success: true,message:"Album has no songs" ,songNames: [""] });
       }
         const songIds =albums.songs_id.map(song => song._id);

@@ -20,3 +20,4 @@ var genreeSchema = new Schema({
 }, { timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' } });
 
 module.exports = mongoose.model('Genre', genreeSchema);
+

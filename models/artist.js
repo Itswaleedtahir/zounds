@@ -17,7 +17,7 @@ var artistSchema = new Schema({
     },
     profile_picture: {
         type: String,
-        default: null
+        default: ""
     },
     label_id:{
          type: Schema.Types.ObjectId, // Assuming references to Artist documents

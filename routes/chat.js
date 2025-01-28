@@ -12,6 +12,7 @@ router.post("/createChat",authPolicy,checkPermission("Chat,Add"),controller.crea
 router.post("/createReaction",authPolicy,controller.createReaction)
 router.get("/getAllChat",authPolicy,checkPermission("Chat,View"),controller.getChats)
 router.put("/updateChat/:id",authPolicy,checkPermission("Chat,Update"),controller.updateChat)
+router.put("/updateReaction/:id",authPolicy,controller.updateReaction)
 router.get("/getAllChats/:artistId",authPolicy,controller.getAllMessages)
 router.delete("/deleteMessage/:id",authPolicy,checkPermission("Chat,Delete"),controller.deleteChat)
 router.delete("/removeReaction/:reactionId",authPolicy,controller.removeReaction)

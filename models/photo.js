@@ -17,6 +17,10 @@ var photoSchema = new Schema({
    title:{
     type:String
    },
+   isDeleted:{
+    type:Boolean,
+    default:false
+},
     createdAt: {
         type: Date,
         default: Date.now

@@ -264,5 +264,47 @@ module.exports = {
             console.error('Error deleting reaction:', error);
           return  res.status(500).json({ message: 'Internal server error', error: error.message , success:false});
         }
-    }  
+    } ,
+    updateReaction: async(req,res)=>{
+        const { emoji } = req.body;
+    const { id } = req.params;
+
+    if (!emoji) {
+        return res.status(400).json({
+            message: 'Emoji is required to update the reaction.',
+            success: false
+        });
+    }
+
+    try {
+        // Check if the reaction exists
+        const existingReaction = await Reaction.findById(id);
+        if (!existingReaction) {
+            return res.status(404).json({
+                message: 'Reaction not found.',
+                success: false
+            });
+        }
+
+        // Update the emoji of the existing reaction
+        existingReaction.emoji = emoji;
+        await existingReaction.save();
+
+        // Fetch updated reactions to show in response
+        const updatedReaction = await Reaction.findById(id).populate('message_id user_id', 'name email message');
+        
+        return res.status(200).json({
+            message: 'Reaction updated successfully.',
+            data: updatedReaction,
+            success: true
+        });
+    } catch (error) {
+        console.error('Error updating reaction:', error);
+        return res.status(500).json({
+            message: 'Internal server error',
+            error: error.message,
+            success: false
+        });
+    }
+    } 
 }

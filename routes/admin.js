@@ -8,6 +8,7 @@ const {checkPermission}=require("../utils")
 const {ROLES} = require("../utils/constant")
 // Controllers
 const controller = require("../controllers/adminController");
+
 // Routes
 router.post("/createAdmin",authPolicy,controller.addAdmin)
 router.post("/adminLogin",controller.adminLogin)

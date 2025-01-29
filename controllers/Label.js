@@ -451,7 +451,6 @@ return res.status(200).send(artists)
         label_id = labelUser ? labelUser._id : null;  // Ensure that createdBy points to the LABEL's ID
     }
 }
-      console.log("Label ID:", label_id);
   
       // Check if the incoming data is an array
       if (!Array.isArray(req.body.photos)) {

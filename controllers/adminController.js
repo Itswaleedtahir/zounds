@@ -539,7 +539,6 @@ ppermissionsGet: async(req,res)=>{
         const songsWithMedia = await Promise.all(songs.map(async song => {
             // Convert song to a plain object to modify it safely
             const songObject = song.toObject();
-            console.log("song",songObject)
             // Fetch associated audios and videos in parallel
             const [audios, videos] = await Promise.all([
                 Audio.find({ song_id: song._id }),

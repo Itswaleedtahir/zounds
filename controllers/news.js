@@ -99,7 +99,6 @@ module.exports = {
         const newsId = req.params.id;
         try {
             const { title, news, image, isActive } = req.body;
-            console.log("body", req.body);
             const newsItem = await News.findOne({_id: newsId});
     
             // Check if each property is provided before updating

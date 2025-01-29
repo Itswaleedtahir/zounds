@@ -87,7 +87,6 @@ module.exports={
         const userId = req.token._id
 
     try {
-        console.log()
         // Attempt to find and remove the document matching both user ID and song ID
           // Find and delete the document based on song_id and user_id
           const result = await LikedSongs.findOneAndDelete({

@@ -260,7 +260,6 @@ module.exports = {
                 return songData;
             });
     
-            console.log("redeemed", isRedeemed);
     
             const enhancedAlbum = {
                 ...album._doc,

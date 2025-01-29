@@ -246,7 +246,6 @@ module.exports = {
                 _id: reactionId, 
                 user_id: req.token._id 
             });
-            console.log("react   user", reactionId, req.token._id)
             if (!reaction) {
                 return res.status(404).json({ message: "Reaction not found." ,success:false});
             }

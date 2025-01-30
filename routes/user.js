@@ -33,6 +33,8 @@ router.post("/artistSongs",authPolicy,controller.artistSongs)
 router.get("/getDownloadArtists",authPolicy,controller.getDownloadedArtists)
 router.get("/getSingleArtist/:artistId",authPolicy,controller.getSingleDownloadArtist)
 router.get("/getRedeemedAlbum/:albumId",authPolicy,controller.getRedeemedAlbums)
+router.get("/getRedeemedAlbumVideo/:albumId",authPolicy,controller.getRedeemedAlbumVideos)
+router.get("/getRedeemedAlbumAudio/:albumId",authPolicy,controller.getRedeemedAlbumAudios)
 router.get("/getArtistSocial/:artistId",authPolicy ,controller.getSocials);
 router.get("/getArtistNews/:artistId",authPolicy ,controller.getNewsEvents);
 router.get("/getFeaturedAlbums/:artistId",authPolicy ,controller.getFeatureAlbums);

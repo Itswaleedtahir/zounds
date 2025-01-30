@@ -785,6 +785,112 @@ getSocials : async (req, res) => {
                 return res.status(500).send({ message: 'Error fetching album', error: error.message });
             }
   },
+  getRedeemedAlbumVideos: async (req, res) => {
+    const { albumId } = req.params;
+    const userId = req.token._id;
+
+    try {
+        const userAlbums = await UserAlbum.findOne({ user_id: userId, album_id: albumId });
+
+        if (!userAlbums) {
+            return res.status(200).json({ success: true, videos: [], message: "This user hasn't redeemed this album", redeemed: false });
+        }
+
+        const album = await Album.findById(albumId)
+            .populate({
+                path: 'songs_id'
+            });
+
+        if (!album) {
+            return res.status(404).send({ message: 'No album found with that ID', success: false });
+        }
+
+        const songIds = album.songs_id.filter(song => song.song_type === "video").map(song => song._id); // Extract song IDs only for video type songs
+
+        const videos = await Video.find({ song_id: { $in: songIds } });
+
+        const videoMap = videos.reduce((map, video) => {
+            map[video.song_id.toString()] = video;
+            return map;
+        }, {});
+
+        const enhancedSongs = album.songs_id
+            .filter(song => song.song_type === "video" && videoMap[song._id.toString()]) // Filter songs to include only those with video data
+            .map(song => {
+                const isLiked = song.likedBy && song.likedBy.includes(userId); // Check if the current user has liked the song
+                return {
+                    _id: song._id,
+                    label_id: song.label_id,
+                    genre_id: song.genre_id,
+                    song_type: song.song_type,
+                    createdAt: song.createdAt,
+                    updatedAt: song.updatedAt,
+                    __v: song.__v,
+                    isDeleted: song.isDeleted,
+                    isLiked: isLiked,  // Add the isLiked flag
+                    video: videoMap[song._id.toString()] ? {...videoMap[song._id.toString()]._doc} : null // Attach video data if available
+                };
+            });
+
+        return res.status(200).json({ success: true, videos: enhancedSongs, redeemed: true });
+    } catch (error) {
+        console.error('Error fetching album videos:', error);
+        return res.status(500).send({ message: 'Error fetching album videos', error: error.message });
+    }
+},
+getRedeemedAlbumAudios: async (req, res) => {
+  const { albumId } = req.params;
+  const userId = req.token._id;
+
+  try {
+      const userAlbums = await UserAlbum.findOne({ user_id: userId, album_id: albumId });
+
+      if (!userAlbums) {
+          return res.status(200).json({ success: true, audios: [], message: "This user hasn't redeemed this album", redeemed: false });
+      }
+
+      const album = await Album.findById(albumId)
+          .populate({
+              path: 'songs_id'
+          });
+
+      if (!album) {
+          return res.status(404).send({ message: 'No album found with that ID', success: false });
+      }
+
+      const songIds = album.songs_id.filter(song => song.song_type === "audio").map(song => song._id); // Extract song IDs only for audio type songs
+
+      const audios = await Audio.find({ song_id: { $in: songIds } });
+
+      const audioMap = audios.reduce((map, audio) => {
+          map[audio.song_id.toString()] = audio;
+          return map;
+      }, {});
+
+      const enhancedSongs = album.songs_id
+          .filter(song => song.song_type === "audio" && audioMap[song._id.toString()]) // Filter songs to include only those with audio data
+          .map(song => {
+              const isLiked = song.likedBy && song.likedBy.includes(userId); // Check if the current user has liked the song
+              return {
+                  _id: song._id,
+                  label_id: song.label_id,
+                  genre_id: song.genre_id,
+                  song_type: song.song_type,
+                  createdAt: song.createdAt,
+                  updatedAt: song.updatedAt,
+                  __v: song.__v,
+                  isDeleted: song.isDeleted,
+                  isLiked: isLiked,  // Add the isLiked flag
+                  audio: audioMap[song._id.toString()] ? {...audioMap[song._id.toString()]._doc} : null // Attach audio data if available
+              };
+          });
+
+      return res.status(200).json({ success: true, audios: enhancedSongs, redeemed: true });
+  } catch (error) {
+      console.error('Error fetching album audios:', error);
+      return res.status(500).send({ message: 'Error fetching album audios', error: error.message });
+  }
+},
   getAllArtists: async (req, res) => {
     try {
       const artists = await Artist.find({});

@@ -99,7 +99,6 @@ module.exports = {
             const { title,description,shopLink} = req.body;
                 
                 const eventItem = await Shop.findOne({_id:eventId})
-                // Update the news item if authorized
         eventItem.title = title || eventItem.title;
         eventItem.description = description || eventItem.description;
         eventItem.shopLink = shopLink || eventItem.shopLink;

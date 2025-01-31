@@ -900,7 +900,6 @@ getRedeemedAlbumAudios: async (req, res) => {
       return res.status(500).send({ message: 'Error fetching album', error: error.message });
     }
   },
-   // By Mujeeb
    getAllArtistsDownload: async (req, res) => {
     try {
         const userId = req.token._id; 

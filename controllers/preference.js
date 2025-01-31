@@ -19,7 +19,7 @@ module.exports = {
     },
      getPreferences : async (req, res) => {
         try {
-        // Find all artists created by this label
+        // Find all artists created by this labell
         const preferences = await Preference.find();
         if (!preferences.length) {
             return res.status(404).json({ msg: "no preference found", success: false });

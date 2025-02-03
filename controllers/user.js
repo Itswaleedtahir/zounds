@@ -258,7 +258,7 @@ module.exports = {
         $set: {
           gender,
           dob,
-          zipcode,
+          zipCode:zipcode,
           preferencesSet: true
         }
       }, { new: true, runValidators: true }); // Option "new: true" returns the updated document
@@ -344,6 +344,15 @@ module.exports = {
           isVerified: true,
           password: user.password
         });
+           // Check if email exists in any collection
+           const dashboardUserExists = await Dashboarduser.findOne({ email:user.email });
+           const appUserExists = await Users.findOne({ email: user.email });
+           if (dashboardUserExists || appUserExists) {
+               return res.status(409).json({
+                   msg: "Email already in use",
+                   success: false,
+               });
+           }
 
         const savedUser = await newUser.save();
         let access_token = await issueToken({
@@ -417,7 +426,15 @@ module.exports = {
           isVerified: true,
           password: `${userData.email}_${appleId}`
         });
-
+           // Check if email exists in any collection
+           const dashboardUserExists = await Dashboarduser.findOne({ email:userData.email });
+           const appUserExists = await Users.findOne({ email: userData.email });
+           if (dashboardUserExists || appUserExists) {
+               return res.status(409).json({
+                   msg: "Email already in use",
+                   success: false,
+               });
+           }
         const savedUser = await newUser.save();
         let access_token = await issueToken({
           _id: savedUser._id,

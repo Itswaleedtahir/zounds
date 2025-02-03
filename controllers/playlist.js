@@ -121,15 +121,19 @@ module.exports = {
         const id = req.params.id;
     
         try {
-            // Fetch the playlist along with song details and their genres
+            // Fetch the playlist along with song details, their genres, and albums
             const playlist = await Playlist.findById(id)
-                .populate({
-                    path: 'songs.songId', // Adjust path to 'songs.songId'
-                    populate: {
-                        path: 'genre_id',
-                        model: 'Genre'
-                    }
-                });
+            .populate({
+                path: 'songs.songId', // Populates song details
+                populate: {
+                    path: 'genre_id',
+                    model: 'Genre'
+                }
+            })
+            .populate({  // Correct population for album
+                path: 'songs.albumId',
+                model: 'Album'
+            });
     
             if (!playlist) {
                 return res.status(404).json({ message: 'Playlist not found.', success: false });
@@ -147,9 +151,10 @@ module.exports = {
             const audios = await Audio.find({ song_id: { $in: songIds } });
             const videos = await Video.find({ song_id: { $in: songIds } });
     
-            // Enrich songs with their audio and video details
+            // Enrich songs with their audio, video details, and album details
             const enrichedSongs = playlist.songs.map(song => ({
                 ...song.songId._doc,
+                album: song.albumId,
                 audio: audios.find(audio => audio.song_id.toString() === song.songId._id.toString()),
                 video: videos.find(video => video.song_id.toString() === song.songId._id.toString())
             }));
@@ -175,7 +180,8 @@ module.exports = {
             console.error('Server error:', error);
             res.status(500).send({ message: 'Internal server error', error: error.message, success: false });
         }
-    },    
+    },
+      
        
 
     deletePlaylist: async (req, res) => {

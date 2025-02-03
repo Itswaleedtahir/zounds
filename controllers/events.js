@@ -98,6 +98,7 @@ module.exports = {
             return res.status(500).json({ message: error.message });
         }
     },  
+    
     updateEvents: async(req, res) => {
         const eventId = req.params.id;
         try {

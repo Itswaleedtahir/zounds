@@ -403,8 +403,7 @@ module.exports = {
                 { $addToSet: { album_id: album_id } },
                 { new: true, upsert: true }
             );
-    
-            // Prepare the response object, changing album_id to a string
+                // Prepare the response object, changing album_id to a string
             const response = userAlbum.toObject(); // Convert the Mongoose document to a plain JavaScript object
             response.album_id = album_id;  // Override the album_id array with the single album ID
     

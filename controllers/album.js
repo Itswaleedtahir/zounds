@@ -65,7 +65,7 @@ module.exports = {
                     label_id = labelUser ? labelUser._id : null;  // Ensure that createdBy points to the LABEL's ID
                 }
             }
-            const albums = await Album.find({ label_id: label_id })
+            const albums = await Album.find({ label_id: label_id,isDeleted:false })
                 .populate('songs_id')
                 .populate('label_id')
                 .populate({

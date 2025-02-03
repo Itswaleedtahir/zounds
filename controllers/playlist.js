@@ -119,7 +119,7 @@ module.exports = {
     },
     getSinglePlaylist: async (req, res) => {
         const id = req.params.id;
-
+    
         try {
             // Fetch the playlist along with song details and their genres
             const playlist = await Playlist.findById(id)
@@ -129,57 +129,54 @@ module.exports = {
                         path: 'genre_id',
                         model: 'Genre'
                     }
-                }); // Populate album details
-
+                });
+    
             if (!playlist) {
                 return res.status(404).json({ message: 'Playlist not found.', success: false });
             }
-
-            console.log("Playlist:", playlist);
-
+    
             // If there are no songs in the playlist, return early
             if (playlist.songs.length === 0) {
-                return res.status(200).json(playlist);
+                return res.status(200).json({ playlist, success: true });
             }
-
+    
             // Extract song IDs from the playlist
             const songIds = playlist.songs.map(song => song.songId._id.toString());
-
+    
             // Fetch audio and video details for songs in this playlist
             const audios = await Audio.find({ song_id: { $in: songIds } });
             const videos = await Video.find({ song_id: { $in: songIds } });
-
-            // Maps to associate song IDs with their respective audio and video
-            const audioMap = audios.reduce((map, audio) => {
-                map[audio.song_id.toString()] = audio;
-                return map;
-            }, {});
-
-            const videoMap = videos.reduce((map, video) => {
-                map[video.song_id.toString()] = video;
-                return map;
-            }, {});
-
+    
             // Enrich songs with their audio and video details
             const enrichedSongs = playlist.songs.map(song => ({
                 ...song.songId._doc,
-                albumid: song.albumId, // Add album details to the song
-                audio: audioMap[song.songId._id.toString()],
-                video: videoMap[song.songId._id.toString()]
+                audio: audios.find(audio => audio.song_id.toString() === song.songId._id.toString()),
+                video: videos.find(video => video.song_id.toString() === song.songId._id.toString())
             }));
-
-            // Update the playlist with enriched songs
-            const enrichedPlaylist = {
-                ...playlist._doc,
-                songs: enrichedSongs
+    
+            // Separate the songs based on song_type
+            const audioSongs = enrichedSongs.filter(song => song.song_type === 'audio');
+            const videoSongs = enrichedSongs.filter(song => song.song_type === 'video');
+    
+            // Structure the final playlist response
+            const finalPlaylist = {
+                _id: playlist._id,
+                user_id: playlist.user_id,
+                AudioSongs: audioSongs.length ? audioSongs : [], // Return empty array if no audio songs are found
+                VideoSongs: videoSongs.length ? videoSongs : [], // Return empty array if no video songs are found
+                title: playlist.title,
+                createdAt: playlist.createdAt,
+                updatedAt: playlist.updatedAt,
+                __v: playlist.__v
             };
-
-            return res.status(200).json({ playlist: enrichedPlaylist, success: true });
+    
+            return res.status(200).json({ playlist: finalPlaylist, success: true });
         } catch (error) {
             console.error('Server error:', error);
             res.status(500).send({ message: 'Internal server error', error: error.message, success: false });
         }
-    },
+    },    
+       
 
     deletePlaylist: async (req, res) => {
         const { id } = req.params;

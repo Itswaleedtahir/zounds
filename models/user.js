@@ -19,7 +19,7 @@ var userSchema = new Schema({
         default: null
     },
     zipCode: {
-        type: Number,
+        type: String,
         default: null
     },
     email: {

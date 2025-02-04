@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 const NFC = require("../models/nfc")
 const UserAlbum = require("../models/userAlbums")
 const Album = require("../models/album")
@@ -354,8 +355,8 @@ module.exports = {
                     "user_id": "",
                     "__v": "",
                     "album_id": "",
-                    "createdAt": "",
-                    "updatedAt": ""
+                    "createdAt": new Date().toISOString(),
+                    "updatedAt": new Date().toISOString()
                 } ,success : false });
             }
     
@@ -366,8 +367,8 @@ module.exports = {
                     "user_id": "",
                     "__v": "",
                     "album_id": "",
-                    "createdAt": "",
-                    "updatedAt": ""
+                    "createdAt": new Date().toISOString(),
+                    "updatedAt": new Date().toISOString()
                 } ,success : false });
             }
     
@@ -377,21 +378,21 @@ module.exports = {
                     "user_id": "",
                     "__v": "",
                     "album_id": "",
-                    "createdAt": "",
-                    "updatedAt": ""
+                    "createdAt": new Date().toISOString(),
+                    "updatedAt": new Date().toISOString()
                 } ,success : false });
             }
     
-            if (nfcRecord.status !== 'active') {
-                return res.status(200).json({ message: "This NFC is not active.",data:{
-                    "_id": "",
-                    "user_id": "",
-                    "__v": "",
-                    "album_id": "",
-                    "createdAt": "",
-                    "updatedAt": ""
-                } ,success : false });
-            }
+                if (nfcRecord.status !== 'active') {
+                    return res.status(200).json({ message: "This NFC is not active.",data:{
+                        "_id": "",
+                        "user_id": "",
+                        "__v": "",
+                        "album_id": "",
+                        "createdAt": new Date().toISOString(),
+                        "updatedAt": new Date().toISOString()
+                    } ,success : false });
+                }
     
             // Update NFC record to marked as mapped
             nfcRecord.mapped = true;

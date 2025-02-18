@@ -66,7 +66,7 @@ module.exports = {
                 album_name: album ? album.title : '',
                 token: item.token,
                 code: item.code,
-                link:`${process.env.APP_URL}/${item.token}?pin_code=${item.code}`,
+                link:`${process.env.APP_URL}/${item.token}?pincode=${item.code}`,
                 activationDate: item.activationDate,
                 status: item.status,
                 mapped: item.mapped,

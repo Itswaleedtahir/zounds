@@ -16,7 +16,7 @@ module.exports = {
         let labelUser;
         let labelName = ''; // To store the label name
         const userRole = req.token.role.toString().toUpperCase();
-    
+
         if (userRole === 'SUPER_ADMIN') {
             label_id = bodyLabelId;
             labelUser = await Admin.findById(label_id);
@@ -27,15 +27,15 @@ module.exports = {
             labelUser = await Admin.findById(req.token.createdBy);
             label_id = labelUser ? labelUser._id : null;
         }
-    
+
         if (!label_id || !labelUser) {
             return res.status(400).send({ message: 'Missing label ID or unauthorized access' });
         }
-    
+
         if (labelUser) {
             labelName = `${labelUser.firstName} ${labelUser.lastName}`;
         }
-    
+
         const nfcChips = [];
         try {
             for (let i = 0; i < numberOfNFC; i++) {
@@ -46,11 +46,11 @@ module.exports = {
                     token: token,
                     code: code,
                 };
-    
+
                 if (activate) {
                     activationDetails.activationDate = new Date();
                 }
-    
+
                 const newNFC = new NFC({
                     label_id,
                     album_id,
@@ -59,41 +59,42 @@ module.exports = {
                 await newNFC.save()
                 nfcChips.push(newNFC);
             }
-    
+
             const album = await Album.findById(album_id);
             const csvData = nfcChips.map(item => ({
                 label_name: labelName,
                 album_name: album ? album.title : '',
                 token: item.token,
                 code: item.code,
+                link:`${process.env.APP_URL}/${item.token}/${item.code}`,
                 activationDate: item.activationDate,
                 status: item.status,
                 mapped: item.mapped,
                 createdAt: item.createdAt,
                 updatedAt: item.updatedAt
             }));
-    
+
             const csv = parse(csvData);
-    
+
             // Define the path for the uploads folder directly to your Nginx path
         const mainDir = '/var/www/html/zounds/uploads';
         if (!fs.existsSync(mainDir)) {
             fs.mkdirSync(mainDir, { recursive: true }); // Create the directory if it doesn't exist
         }
 
-    
+
             // Append a timestamp to the filename
             const date = new Date();
             const timestamp = date.getTime(); // You could also use date.toISOString() for a more readable format
             const filename = `NFCs_${timestamp}.csv`;
             const filePath = path.join(mainDir, filename);
             fs.writeFileSync(filePath, csv);
-    
+
             // Construct the full URL
             const protocol = req.protocol; // 'http' or 'https'
             const host = req.get('host'); // 'example.com' or 'localhost:3000'
             const fileLink = `${protocol}://${host}/uploads/${filename}`;
-    
+
             console.log("Full File Link: ", fileLink);
             return res.json({
                 success: true,
@@ -113,7 +114,7 @@ module.exports = {
         let labelUser;
         let labelName = ''; // To store the label name
         const userRole = req.token.role.toString().toUpperCase();
-    
+
         if (userRole === 'SUPER_ADMIN') {
             label_id = bodyLabelId;
             labelUser = await Admin.findById(label_id);
@@ -124,16 +125,16 @@ module.exports = {
             labelUser = await Admin.findById(req.token.createdBy);
             label_id = labelUser ? labelUser._id : null;
         }
-    
+
         if (!label_id || !labelUser) {
             return res.status(400).send({ message: 'Missing label ID or unauthorized access' });
         }
-    
+
         const results = [];
         const bufferStream = new require('stream').Readable();
         bufferStream.push(req.files.file.data); // Push buffer to stream
         bufferStream.push(null); // Indicate end of stream
-    
+
         bufferStream
             .pipe(csv())
             .on('data', (row) => results.push(row))
@@ -160,17 +161,17 @@ module.exports = {
                 res.status(500).send('Failed to process file: ' + error.message);
             });
     },
-       
+
     getAllNfcs: async(req,res) => {
         const userRole = req.token.role.toString().toUpperCase();
         const userId = req.token._id; // User's ID from the token
         const createdBy = req.token.createdBy; // For LABEL_STAFF to find their label
-        
+
         // Default page and limit parameters from the request, or use defaults
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10; // Default to 10 records per page if not specified
         const skip = (page - 1) * limit; // Calculate skip
-    
+
         try {
             let query = {};
             if (userRole === 'SUPER_ADMIN') {
@@ -186,17 +187,17 @@ module.exports = {
             } else {
                 return res.status(403).send({ message: 'Unauthorized access' });
             }
-        
+
             // Fetch records with pagination
             const nfcRecords = await NFC.find(query)
                                         .populate('label_id')
                                         .populate('album_id')
                                         .skip(skip)
                                         .limit(limit);
-    
+
             // Count total records for pagination metadata
             const totalRecords = await NFC.countDocuments(query);
-    
+
             return res.status(200).send({
                 totalRecords: totalRecords,
                 pages: Math.ceil(totalRecords / limit),
@@ -208,17 +209,17 @@ module.exports = {
             return res.status(500).send({ message: 'Error fetching NFC records', error: error.message });
         }
     },
-    
+
     updateNfc : async(req,res)=>{
         const { status } = req.body; // Expected to be 'active' or 'not active'
-        
-    
+
+
         try {
             // Validate the status
             if (!['active', 'inactive'].includes(status)) {
                 return res.status(400).send({ message: 'Invalid status. Must be "active" or "inactive".' });
             }
-    
+
             // Find the NFC record
             const nfcRecord = await NFC.findById(req.params.id);
             if (!nfcRecord) {
@@ -228,7 +229,7 @@ module.exports = {
                 nfcRecord.status = status;
                 await nfcRecord.save();
                 return res.status(200).send({ msg: 'NFC status updated successfully.', data: nfcRecord ,success:true });
-          
+
         } catch (error) {
           return  res.status(500).send({ message: 'Error updating NFC status', error: error.message });
         }
@@ -238,15 +239,15 @@ module.exports = {
         const userRole = req.token.role.toString().toUpperCase();
         const userId = req.token._id;
         const createdBy = req.token.createdBy;
-    
+
         // Pagination setup
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
-    
+
         try {
             let query = {};
-    
+
             // Determine active status
             if (isActive === 'true') {
                 query.status = 'active';
@@ -259,7 +260,7 @@ module.exports = {
             } else {
                 return res.status(400).send({ message: 'Invalid isActive parameter. Must be "true" or "false".' });
             }
-    
+
             // Adjust the query based on the user's role
             if (userRole !== 'SUPER_ADMIN') {
                 if (userRole === 'LABEL') {
@@ -270,17 +271,17 @@ module.exports = {
                     return res.status(403).send({ message: 'Unauthorized access' });
                 }
             }
-    
+
             // Fetch the NFC records based on the constructed query with pagination
             const nfcRecords = await NFC.find(query)
                                         .populate('label_id')
                                         .populate('album_id')
                                         .skip(skip)
                                         .limit(limit);
-    
+
             // Count total records for pagination metadata
             const totalRecords = await NFC.countDocuments(query);
-    
+
             res.status(200).send({
                 totalRecords: totalRecords,
                 pages: Math.ceil(totalRecords / limit),
@@ -291,7 +292,7 @@ module.exports = {
             return res.status(500).send({ message: 'Error fetching NFC records', error: error.message });
         }
     }
-,    
+,
     downloadCsv: async(req,res)=>{
         const userRole = req.token.role.toString().toUpperCase();
         const userId = req.token._id; // User's ID from the token
@@ -311,7 +312,7 @@ module.exports = {
             } else {
                 return res.status(403).send({ message: 'Unauthorized access' });
             }
-    
+
             const data = await NFC.find(query)
                 .populate('label_id') // Assuming 'name' is the field you want from Dashboarduser
                 .populate('album_id', 'title') // Assuming 'name' is the field you want from Album
@@ -327,13 +328,13 @@ module.exports = {
                 createdAt: item.createdAt,
                 updatedAt: item.updatedAt
             }));
-    
+
             const csv = parse(csvData);
              // Set headers to prompt download
     res.header('Content-Type', 'text/csv');
     res.header('Content-Disposition', 'attachment; filename=NFCs.csv');
     res.send(csv);
-           
+
         } catch (error) {
             console.error('Failed to export data to CSV:', error);
             return res.status(500).send({ message: 'Failed to export data to CSV:', error: error.message });
@@ -342,11 +343,11 @@ module.exports = {
     verifyNfc: async(req, res) => {
         const { token, code, album_id } = req.body;
         const userId = req.token._id; // Extract user ID from JWT token passed in the request
-    
+
         if (!token || !code || !album_id) {
             return res.status(400).send({ message: "All fields are required: token, code, and album_id." });
         }
-    
+
         try {
             const nfcRecord = await NFC.findOne({ token: token });
             if (!nfcRecord) {
@@ -359,7 +360,7 @@ module.exports = {
                     "updatedAt": new Date().toISOString()
                 } ,success : false });
             }
-    
+
             // Check if NFC is already used
             if (nfcRecord.mapped) {
                 return res.status(200).json({ message: "This NFC has already been used.",data:{
@@ -371,7 +372,7 @@ module.exports = {
                     "updatedAt": new Date().toISOString()
                 } ,success : false });
             }
-    
+
             if (nfcRecord.code !== code || nfcRecord.album_id.toString() !== album_id) {
                 return res.status(200).json({ message: "Invalid code or album ID.",data:{
                     "_id": "",
@@ -382,7 +383,7 @@ module.exports = {
                     "updatedAt": new Date().toISOString()
                 } ,success : false });
             }
-    
+
                 if (nfcRecord.status !== 'active') {
                     return res.status(200).json({ message: "This NFC is not active.",data:{
                         "_id": "",
@@ -393,11 +394,11 @@ module.exports = {
                         "updatedAt": new Date().toISOString()
                     } ,success : false });
                 }
-    
+
             // Update NFC record to marked as mapped
             nfcRecord.mapped = true;
             await nfcRecord.save();
-    
+
             // Add album to user's collection
             const userAlbum = await UserAlbum.findOneAndUpdate(
                 { user_id: userId },
@@ -407,7 +408,7 @@ module.exports = {
                 // Prepare the response object, changing album_id to a string
             const response = userAlbum.toObject(); // Convert the Mongoose document to a plain JavaScript object
             response.album_id = album_id;  // Override the album_id array with the single album ID
-    
+
             return res.status(200).json({
                 message: "NFC verified and album added to user's collection.",
                 data: response,
@@ -423,13 +424,13 @@ module.exports = {
             // Pagination parameter from query string with only page adjustable
             const { page  } = req.query;
             const limit = 10; // Hard-coded limit for pagination
-    
+
             // Search parameters from request body
             const { label_id, album_id, activationFrom, activationTo } = req.body;
-    
+
             // Calculate the 'skip' value for pagination
             const skip = (page - 1) * limit;
-    
+
             // Build the query object from the request body
             let query = {
                 label_id: label_id,
@@ -439,28 +440,28 @@ module.exports = {
                 // Parse the dates from strings and adjust to UTC+5
                 const startOfDay = new Date(activationFrom);
                 startOfDay.setUTCHours(19, 0, 0, 0); // Adjust for UTC+5 by setting UTC hours to 19:00 of the previous day
-            
+
                 const endOfDay = new Date(activationTo);
                 endOfDay.setUTCHours(18, 59, 59, 999); // Adjust for UTC+5 by setting UTC hours to 18:59:59.999 of the actual end day
-            
+
                 query.activationDate = {
                     $gte: startOfDay,
                     $lte: endOfDay
                 };
             }
-              
-            
+
+
             console.log("query",query)
-    
+
             // Find records with pagination
             const records = await NFC.find(query)
                 .populate('label_id album_id')
                 .skip(skip)
                 .limit(limit);
-    
+
             // Count the total records for pagination data
             const total = await NFC.countDocuments(query);
-    
+
             res.status(200).json({
                 success: true,
                 totalRecords: total,
@@ -476,5 +477,5 @@ module.exports = {
             });
         }
     }
-    
+
 }

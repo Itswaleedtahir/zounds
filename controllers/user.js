@@ -65,7 +65,6 @@ module.exports = {
         return res.status(400).json({ msg: "Please provide both email and OTP", success: false });
       }
       let user = await Users.findOne({ email });
-      console.log("user", user)
       if (!user) {
         return res.status(404).json({ msg: "User not found", success: false });
       }
@@ -305,9 +304,6 @@ module.exports = {
           Authorization: `Bearer ${accessToken}`
         }
       });
-
-      console.log('Response of Google', response.data);
-      console.log('Google email is', response.data.email);
 
       const user = {
         email: response.data.email,

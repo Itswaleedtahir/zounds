@@ -8,6 +8,7 @@ const secret = process.env.secret
 const fs = require('fs');
 const path = require('path');
 const mime = require('mime-types');
+const { sendEmail } = require( "../utils/sesClient.js");
 dotenv.config();
 const transporter = nodemailer.createTransport({
   host: "smtp-relay.brevo.com",
@@ -24,8 +25,8 @@ AWS.config.update({
   region: process.env.AWS_REGION,
 });
 const s3 = new AWS.S3({
-  apiVersion: "2006-03-01", // Optional, use the latest API version
-  region: process.env.AWS_REGION, // Ensure the region is explicitly passed
+  apiVersion: "2006-03-01", 
+  region: process.env.AWS_REGION, 
 });
 
 module.exports = {
@@ -36,17 +37,17 @@ module.exports = {
   },
   sendVerificationEmail: async (email, otp, res) => {
     try {
-      const info = await transporter.sendMail({
-        from: process.env.BREVO_SENDER,
-        to: email,
-        subject: "Verify Your Account",
-        html: `<p>Dear User,<br><br>
+      const info = await sendEmail({
+      from: process.env.SENDER_EMAIL,
+      to: email,
+      subject: "Verify Your Account",
+      body: `<p>Dear User,<br><br>
         Thank you for registering. Please enter the following OTP to verify your account: <strong>${otp}</strong><br><br>
         If you did not register, please ignore this email.<br><br>
         Thank you,<br>
         The Team</p>`,
-      });
-      console.log("Verification Email sent", info.messageId);
+    });
+      console.log("Verification Email sent", info.MessageId);
     } catch (error) {
       console.error("Failed to send email:", error);
       return res.status(500).json({
@@ -57,17 +58,17 @@ module.exports = {
   },
   ResendVerificationEmail: async (email, otp, res) => {
     try {
-      const info = await transporter.sendMail({
-        from: process.env.BREVO_SENDER,
-        to: email,
-        subject: "Verify Your Account",
-        html: `<p>Dear User,<br><br>
+      const info = await sendEmail({
+      from: process.env.SENDER_EMAIL,
+      to: email,
+      subject: "Verify Your Account",
+      body:`<p>Dear User,<br><br>
         Your otp is: <strong>${otp}</strong><br><br>
         If you did not register, please ignore this email.<br><br>
         Thank you,<br>
         The Team</p>`,
-      });
-      console.log("Verification Email sent", info.messageId);
+    });
+      console.log("Verification Email sent", info.MessageId);
     } catch (error) {
       console.error("Failed to send email:", error);
       return res.status(500).json({
@@ -78,17 +79,17 @@ module.exports = {
   },
   sendResetPasswordMail: async (email, otp, res) => {
     try {
-      const info = await transporter.sendMail({
-        from: process.env.BREVO_SENDER,
-        to: email,
-        subject: "Reset your Password",
-        text: "Reset your forgotten Password",
-        html: `<p>Dear User,<br><br>
+     
+       const info = await sendEmail({
+      from: process.env.SENDER_EMAIL,
+      to: email,
+      subject: "Reset your Password",
+      body:`<p>Dear User,<br><br>
         Thank you for registering. Please enter the following OTP to reset your password: <strong>${otp}</strong><br><br>
         Thank you,<br>
         The Team</p>`,
-      });
-      console.log("Reset Password Email sent", info.messageId);
+    });
+      console.log("Verification Email sent", info.MessageId);
     } catch (error) {
       console.error("Failed to send email:", error);
       return res.status(500).json({
@@ -176,19 +177,19 @@ module.exports = {
   // },
   sendUserInvite: async (email, password, role,res) => {
     try {
-      const info = await transporter.sendMail({
-        from: process.env.BREVO_SENDER,
-        to: email,
-        subject: `Your ${role} Credentials`,
-        text: `Your ${role} Credentials`,
-        html: `<p>Dear ${role},<br><br>
+       const info = await sendEmail({
+      from: process.env.SENDER_EMAIL,
+      to: email,
+      subject: `Your ${role} Credentials`,
+      body:`<p>Dear ${role},<br><br>
         Thank you for registering. Please find the provided details for the login <br><br>
          email:<strong>${email}</strong><br><br>
          password:<strong>${password}</strong><br><br>
         Thank you,<br>
         The Team</p>`,
-      });
-      console.log("Reset Password Email sent", info.messageId);
+    });
+
+      console.log("Verification Email sent", info.MessageId);
     } catch (error) {
       console.error("Failed to send email:", error);
       return res.status(500).json({
@@ -199,19 +200,18 @@ module.exports = {
   },
   sendArtistInvite: async (email, password, res) => {
     try {
-      const info = await transporter.sendMail({
-        from: process.env.BREVO_SENDER,
-        to: email,
-        subject: "Your Label Credentials",
-        text: "Your Artist Credentials",
-        html: `<p>Dear Artist,<br><br>
+      const info = await sendEmail({
+      from: process.env.SENDER_EMAIL,
+      to: email,
+      subject: "Your Label Credentials",
+      body:`<p>Dear Artist,<br><br>
         Thank you for registering. Please find the provided details for the login <br><br>
          email:<strong>${email}</strong><br><br>
          password:<strong>${password}</strong><br><br>
         Thank you,<br>
         The Team</p>`,
-      });
-      console.log("Reset Password Email sent", info.messageId);
+    });
+     console.log("Verification Email sent", info.MessageId);
     } catch (error) {
       console.error("Failed to send email:", error);
       return res.status(500).json({
@@ -287,7 +287,5 @@ const key = `${folderName}/${fileName}`; // Creates a path including the folder
     throw err; // Rethrow the error for handling in the calling function
 }
 }
-
-
 
 };

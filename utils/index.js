@@ -98,6 +98,33 @@ module.exports = {
       });
     }
   },
+  sendWellcomeMail: async (email, res) => {
+  try {
+    const info = await sendEmail({
+      from: process.env.SENDER_EMAIL,
+      to:   email,
+      subject: "🎉 Welcome to Fanzbox!",
+      body: `
+        <p>Hi there,</p>
+        <p>Welcome to <strong>Fanzbox</strong>! We’re thrilled you’ve joined our community of music lovers.</p>
+        <p>Start exploring exclusive tracks, videos, greetings and more from your favourite artists.</p>
+        <br/>
+        <p>If you have any questions, just hit reply—we’re here to help!</p>
+        <br/>
+        <p>Cheers,<br/>
+        The Fanzbox Team</p>
+      `
+    });
+    console.log("Welcome Email sent", info.MessageId);
+  } catch (error) {
+    console.error("Failed to send welcome email:", error);
+    return res.status(500).json({
+      msg:   "Failed to send welcome email",
+      error: error.message || "Something went wrong."
+    });
+  }
+},
+
   comparePassword: (pw, hash) => {
     return new Promise((resolve, reject) => {
       bcrypt.compare(pw, hash, function (err, res) {

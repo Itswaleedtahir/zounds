@@ -1,5 +1,5 @@
 const Users = require("../models/user");
-const { generateErrorInstance, sendVerificationEmail, ResendVerificationEmail, sendResetPasswordMail, comparePassword, uploadFile, issueToken } = require("../utils");
+const { generateErrorInstance, sendVerificationEmail, ResendVerificationEmail, sendResetPasswordMail, comparePassword, uploadFile, issueToken, sendWellcomeMail } = require("../utils");
 const bcrypt = require("bcryptjs");
 const crypto = require('crypto');
 const Preference = require("../models/preferences")
@@ -283,6 +283,8 @@ module.exports = {
       });
 
       await newPreference.save();
+
+      await sendWellcomeMail(user.email);
       return res.status(200).json({
         success: true,
         message: 'Preference created successfully',

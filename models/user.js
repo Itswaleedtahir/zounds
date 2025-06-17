@@ -26,7 +26,7 @@ var userSchema = new Schema({
         type: String,
         required: true
     },
-    image:{
+    image: {
         type: String
     },
     password: {
@@ -37,6 +37,7 @@ var userSchema = new Schema({
         type: String,
         default: null
     },
+    profile_img: { type: String, default: null },
     isVerified: {
         type: Boolean,
         default: false
@@ -49,9 +50,9 @@ var userSchema = new Schema({
         type: String,
         default: null
     },
-    preferencesSet:{
-        type:Boolean,
-        default:false
+    preferencesSet: {
+        type: Boolean,
+        default: false
     },
     createdAt: {
         type: Date,

@@ -21,6 +21,7 @@ router.get("/getRecentlyPlayed",authPolicy ,controller.getHistorySongs);
 router.post("/uplaodFile", controller.fileUploadS3);
 router.post("/googleLogin",controller.googleVerify)
 router.post("/appleLogin",controller.appleLogin)
+router.put("/update-profile", authPolicy, controller.updateProfile);
 router.get("/getPreference",authPolicy,controller.userArtists)
 router.get("/getRedeemAlbums",authPolicy,controller.getAlbumsOfUserRedeemed)
 router.get("/getAllArtists",authPolicy,controller.getAllArtists)

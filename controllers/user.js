@@ -20,6 +20,8 @@ const Audio = require("../models/audio")
 const Video = require("../models/video")
 const PlayHistory = require("../models/listeningHistory")
 const Dashboarduser = require("../models/dashboardUsers")
+const mongoose = require("mongoose")
+
 module.exports = {
   addUser: async (req, res) => {
     try {
@@ -172,8 +174,7 @@ module.exports = {
 
   fileUploadS3: async (req, res, next) => {
     try {
-      console.log("req.files ", req.files);
-      let files = req.files.file; // Extract the files object
+      let files = req.files.file; 
       if (!files) {
         return res.status(400).json({ success: false, message: "No files uploaded" });
       }
@@ -243,6 +244,49 @@ module.exports = {
       return res.status(500).json({
         success: false,
         message: "Internal Server Error"
+      });
+    }
+  },
+  updateProfile: async (req, res) => {
+    try {
+      const userId = req.token._id; 
+      const { firstName, lastName, profile_img } = req.body;
+
+      if (!firstName && !lastName && !profile_img) {
+        return res.status(400).json({
+          success: false,
+          msg: "Please provide firstName, lastName, or profile_img to update."
+        });
+      }
+
+      // Build the `$set` update object
+      const updateFields = { updatedAt: Date.now() };
+      if (firstName  != null) updateFields.firstName  = firstName;
+      if (lastName   != null) updateFields.lastName   = lastName;
+      if (profile_img!= null) updateFields.profile_img = profile_img;
+
+      const updatedUser = await Users.findByIdAndUpdate(
+        userId,
+        { $set: updateFields },
+        { new: true, runValidators: true }
+      ).select("-password -otp"); 
+
+      if (!updatedUser) {
+        return res.status(404).json({ success: false, msg: "User not found." });
+      }
+
+      return res.status(200).json({
+        success: true,
+        msg: "Profile updated successfully.",
+        user: updatedUser
+      });
+
+    } catch (error) {
+      console.error("updateProfile error:", error);
+      return res.status(500).json({
+        success: false,
+        msg: "Failed to update profile.",
+        error: error.message
       });
     }
   },
@@ -453,6 +497,7 @@ module.exports = {
       return res.status(500).send({ message: 'Error', error: error.message });
     }
   },
+
   userArtists: async (req, res) => {
     try {
       const userId = req.token._id
@@ -487,7 +532,7 @@ module.exports = {
     try {
       const userId = req.token._id;
       const downloadArtists = await DownloadArtist.find({ user_id: userId })
-        .populate('artist_id')  // assuming you want to populate details of artists
+        .populate('artist_id') 
         .exec();
 
       return res.status(200).json({
@@ -920,13 +965,16 @@ getRedeemedAlbumAudios: async (req, res) => {
         const userId = req.token._id; 
        
         const downloadedArtists = await DownloadArtist.find({ user_id: userId }).populate('artist_id');
-        
+
         const downloadedArtistIds = downloadedArtists
-            .flatMap(download => download.artist_id) 
-            .map(artist => artist?._id?.toString()) 
+  .flatMap(download => download.artist_id)
+  .map(artist => mongoose.Types.ObjectId(artist?._id));
+        console.log(downloadedArtistIds)
         const artists = await Artist.find({
             _id: { $nin: downloadedArtistIds }
         });
+
+        console.log(artists)
 
         return res.status(200).json({
             artists: artists,

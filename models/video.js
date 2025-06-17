@@ -16,7 +16,7 @@ var videoSchema = new Schema({
         required: true
     },
     duration: {
-        type: String,  // Time stored as a string, e.g., 'HH:mm:ss'
+        type: String, 
         required: true
     },
     file_path: {
@@ -29,11 +29,11 @@ var videoSchema = new Schema({
     },
     resolution: {
         type: String,
-        required: true
+        required: false
     },
     video_format: {
         type: String,
-        required: true
+        required: false
     },
     createdAt: {
         type: Date,

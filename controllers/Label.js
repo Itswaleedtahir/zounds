@@ -52,7 +52,7 @@ let methods = {
               title:file.title,
               lyricsFile:file.lyricsFile || null,
               duration:file.duration,
-              file_size: file.file_size
+              file_size: file.file_size != "" ? file.file_size : null,
             }));
             await Audio.insertMany(mediaRecords);
           } else if (song_type === 'video' && mediaFiles && mediaFiles.length > 0) {

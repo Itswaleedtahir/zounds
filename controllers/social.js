@@ -3,41 +3,52 @@ const Artist = require("../models/artist")
 const Dashboarduser = require("../models/dashboardUsers")
 module.exports = {
     createSocials: async (req, res) => {
-        try {
-            const { socials } = req.body; // Expecting an array of social objects
-    
-            // Validate request body
-            if (!socials || !Array.isArray(socials) || socials.some(social => !social.social || !social.socialLink)) {
-                return res.status(400).json({ msg: "Please provide social details", success: false });
-            }
-    
-            // Check if the request is from an artist
-            let artist;
-            if (req.token.role === 'ARTIST') {
-                artist = await Artist.findOne({ userId: req.token._id });
-                if (!artist) {
-                    return res.status(404).json({ msg: "Artist not found", success: false });
-                }
-            } else {
-                return res.status(403).json({ msg: "Unauthorized access", success: false });
-            }
-    
-            // Prepare social links for insertion
-            const socialLinksToAdd = socials.map(social => ({
-                artist_id: artist._id,
-                social: social.social,
-                socialLink: social.socialLink
-            }));
-    
-            // Insert social links
-            const addedSocials = await Social.insertMany(socialLinksToAdd);
-    
-            return res.status(201).json({ addedSocials, success: true });
-        } catch (error) {
-            console.error("error", error);
-            return res.status(400).json({ message: error.message, success: false });
+    try {
+        const { socials } = req.body;
+
+        // Validate input
+        if (!socials || !Array.isArray(socials) || socials.some(social => !social.social || !social.socialLink)) {
+            return res.status(400).json({ msg: "Please provide social details", success: false });
         }
-    },
+
+        let artist;
+        if (req.token.role === 'ARTIST') {
+            artist = await Artist.findOne({ userId: req.token._id });
+            if (!artist) {
+                return res.status(404).json({ msg: "Artist not found", success: false });
+            }
+        } else {
+            return res.status(403).json({ msg: "Unauthorized access", success: false });
+        }
+
+        // Check for duplicates
+        const existingSocials = await Social.find({ artist_id: artist._id });
+        const existingTypes = new Set(existingSocials.map(s => s.social.toLowerCase()));
+
+        const duplicates = socials.filter(s => existingTypes.has(s.social.toLowerCase()));
+        if (duplicates.length > 0) {
+            return res.status(400).json({
+                msg: `Social "${duplicates[0].social}" already exists`,
+                success: false
+            });
+        }
+
+        // Prepare new socials
+        const socialLinksToAdd = socials.map(s => ({
+            artist_id: artist._id,
+            social: s.social,
+            socialLink: s.socialLink
+        }));
+
+        const addedSocials = await Social.insertMany(socialLinksToAdd);
+
+        return res.status(201).json({ addedSocials, success: true });
+    } catch (error) {
+        console.error("error", error);
+        return res.status(400).json({ message: error.message, success: false });
+    }
+},
+
     
      getSocials : async (req, res) => {
         try {

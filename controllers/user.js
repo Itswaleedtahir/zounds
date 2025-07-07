@@ -953,7 +953,7 @@ getRedeemedAlbumAudios: async (req, res) => {
 },
   getAllArtists: async (req, res) => {
     try {
-      const artists = await Artist.find({});
+      const artists = await Artist.find({}).sort({ createdAt: -1 });
       return res.status(200).json({ artists: artists, success: true });
     } catch (error) {
       console.error('Error fetching album:', error);
@@ -970,11 +970,9 @@ getRedeemedAlbumAudios: async (req, res) => {
   .flatMap(download => download.artist_id)
   .map(artist => mongoose.Types.ObjectId(artist?._id));
         console.log(downloadedArtistIds)
-        const artists = await Artist.find({
-            _id: { $nin: downloadedArtistIds }
-        });
-
-        console.log(artists)
+         const artists = await Artist.find({
+      _id: { $nin: downloadedArtistIds }
+    }).sort({ createdAt: -1 });
 
         return res.status(200).json({
             artists: artists,

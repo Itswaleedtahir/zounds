@@ -342,7 +342,7 @@ module.exports = {
     },
     verifyNfc: async(req, res) => {
         const { token, code, album_id } = req.body;
-        const userId = req.token._id; // Extract user ID from JWT token passed in the request
+        const userId = req.token._id; 
 
         if (!token || !code || !album_id) {
             return res.status(400).send({ message: "All fields are required: token, code, and album_id." });
@@ -395,7 +395,6 @@ module.exports = {
                     } ,success : false });
                 }
 
-            // Update NFC record to marked as mapped
             nfcRecord.mapped = true;
             await nfcRecord.save();
 

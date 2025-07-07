@@ -960,32 +960,38 @@ getRedeemedAlbumAudios: async (req, res) => {
       return res.status(500).send({ message: 'Error fetching album', error: error.message });
     }
   },
-   getAllArtistsDownload: async (req, res) => {
-    try {
-        const userId = req.token._id; 
-       
-        const downloadedArtists = await DownloadArtist.find({ user_id: userId }).populate('artist_id');
+ getAllArtistsDownload: async (req, res) => {
+  try {
+    const userId = req.token._id;
 
-        const downloadedArtistIds = downloadedArtists
-  .flatMap(download => download.artist_id)
-  .map(artist => mongoose.Types.ObjectId(artist?._id));
-        console.log(downloadedArtistIds)
-         const artists = await Artist.find({
+    const downloadedArtists = await DownloadArtist.find({ user_id: userId }).populate('artist_id');
+
+    const downloadedArtistIds = downloadedArtists
+      .map(download => download.artist_id?._id)
+      .filter(id => id)
+      .map(id => new mongoose.Types.ObjectId(id));
+
+    console.log('Downloaded Artist IDs:', downloadedArtistIds);
+
+    const artists = await Artist.find({
       _id: { $nin: downloadedArtistIds }
     }).sort({ createdAt: -1 });
 
-        return res.status(200).json({
-            artists: artists,
-            success: true
-        });
-    } catch (error) {
-        console.error('Error fetching artists:', error);
-        return res.status(500).send({
-            message: 'Error fetching artists',
-            error: error.message
-        });
-    }
+    return res.status(200).json({
+      success: true,
+      message: 'Artists not yet downloaded fetched successfully',
+      data: artists,
+    });
+  } catch (error) {
+    console.error('Error fetching undownloaded artists:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error fetching artists',
+      error: error.message,
+    });
+  }
 },
+
 
   getAllGenre: async (req, res) => {
     try {

@@ -546,6 +546,29 @@ module.exports = {
       });
     }
   },
+  removeDownloadedArtist: async (req, res) => {
+    try {
+      const userId = req.token._id;
+      const { artistId } = req.body;
+
+      // Check if the user has downloaded the artist
+       const downloadArtist = await DownloadArtist.findOne({ user_id: userId, artist_id: artistId });
+      if (!downloadArtist) {
+        return res.status(400).json({ success: false, message: "Artist not found in downloads" });
+      }
+
+      // Remove the downloaded artist
+       await DownloadArtist.deleteOne({ _id: downloadArtist._id });
+
+      return res.status(200).json({ success: true, message: "Artist removed from downloads" });
+    } catch (error) {
+      console.error('Server error:', error);
+      return res.status(500).json({ message: 'Internal server error', success: false });
+    }
+  },
+
+
+
   getSingleDownloadArtist: async (req, res) => {
     const userId = req.token._id;
     const { artistId } = req.params;

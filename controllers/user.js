@@ -35,7 +35,7 @@ module.exports = {
 
       if (dashboardUserExists) {
         return res.status(409).json({
-          msg: "Looks like this email is already linked to a another role. Try logging in with that role or sign up using another email.",
+          msg: "Looks like this email is already linked to a another role. Try sign up using another email.",
           success: false,
         });
       }

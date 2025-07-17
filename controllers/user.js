@@ -29,15 +29,22 @@ module.exports = {
       if (!email || !password || !name) {
         return res.status(400).json({ msg: "Please provide user data", success: false });
       }
-        // Check if email exists in any collection
-        const dashboardUserExists = await Dashboarduser.findOne({ email: email });
-        const appUserExists = await Users.findOne({ email: email });
-        if (dashboardUserExists || appUserExists) {
-            return res.status(409).json({
-                msg: "Email already in use",
-                success: false,
-            });
-        }
+      // Check if email exists in any collection
+      const dashboardUserExists = await Dashboarduser.findOne({ email: email });
+      const appUserExists = await Users.findOne({ email: email });
+
+      if (dashboardUserExists) {
+        return res.status(409).json({
+          msg: "Looks like this email is already linked to a another role. Try logging in with that role or sign up using another email.",
+          success: false,
+        });
+      }
+      if (appUserExists) {
+        return res.status(409).json({
+          msg: "Email already in use",
+          success: false,
+        });
+      }
 
       // Generate a 4-digit OTP
       const otp = crypto.randomInt(100000, 999999);
@@ -174,7 +181,7 @@ module.exports = {
 
   fileUploadS3: async (req, res, next) => {
     try {
-      let files = req.files.file; 
+      let files = req.files.file;
       if (!files) {
         return res.status(400).json({ success: false, message: "No files uploaded" });
       }
@@ -249,7 +256,7 @@ module.exports = {
   },
   updateProfile: async (req, res) => {
     try {
-      const userId = req.token._id; 
+      const userId = req.token._id;
       const { firstName, lastName, profile_img } = req.body;
 
       if (!firstName && !lastName && !profile_img) {
@@ -261,15 +268,15 @@ module.exports = {
 
       // Build the `$set` update object
       const updateFields = { updatedAt: Date.now() };
-      if (firstName  != null) updateFields.firstName  = firstName;
-      if (lastName   != null) updateFields.lastName   = lastName;
-      if (profile_img!= null) updateFields.profile_img = profile_img;
+      if (firstName != null) updateFields.firstName = firstName;
+      if (lastName != null) updateFields.lastName = lastName;
+      if (profile_img != null) updateFields.profile_img = profile_img;
 
       const updatedUser = await Users.findByIdAndUpdate(
         userId,
         { $set: updateFields },
         { new: true, runValidators: true }
-      ).select("-password -otp"); 
+      ).select("-password -otp");
 
       if (!updatedUser) {
         return res.status(404).json({ success: false, msg: "User not found." });
@@ -301,7 +308,7 @@ module.exports = {
         $set: {
           gender,
           dob,
-          zipCode:zipcode,
+          zipCode: zipcode,
           preferencesSet: true
         }
       }, { new: true, runValidators: true }); // Option "new: true" returns the updated document
@@ -332,7 +339,7 @@ module.exports = {
       return res.status(200).json({
         success: true,
         message: 'Preference created successfully',
-        user:user
+        user: user
       });
     } catch (error) {
       console.error("Error creating preference:", error);
@@ -386,15 +393,15 @@ module.exports = {
           isVerified: true,
           password: user.password
         });
-           // Check if email exists in any collection
-           const dashboardUserExists = await Dashboarduser.findOne({ email:user.email });
-           const appUserExists = await Users.findOne({ email: user.email });
-           if (dashboardUserExists || appUserExists) {
-               return res.status(409).json({
-                   msg: "Email already in use",
-                   success: false,
-               });
-           }
+        // Check if email exists in any collection
+        const dashboardUserExists = await Dashboarduser.findOne({ email: user.email });
+        const appUserExists = await Users.findOne({ email: user.email });
+        if (dashboardUserExists || appUserExists) {
+          return res.status(409).json({
+            msg: "Email already in use",
+            success: false,
+          });
+        }
 
         const savedUser = await newUser.save();
         let access_token = await issueToken({
@@ -409,7 +416,7 @@ module.exports = {
             imageUrl: savedUser.image,
           }
         };
-        return res.status(201).json({msg: "Login successful", user: savedUser,access_token, success: true });
+        return res.status(201).json({ msg: "Login successful", user: savedUser, access_token, success: true });
       }
 
     } catch (error) {
@@ -455,7 +462,7 @@ module.exports = {
             imageUrl: user.image,
           }
         };
-        return res.status(200).send({msg: "Login successful",user: user ,access_token, success: true })
+        return res.status(200).send({ msg: "Login successful", user: user, access_token, success: true })
 
       } else {
         console.log("insideelseeee")
@@ -468,15 +475,15 @@ module.exports = {
           isVerified: true,
           password: `${userData.email}_${appleId}`
         });
-           // Check if email exists in any collection
-           const dashboardUserExists = await Dashboarduser.findOne({ email:userData.email });
-           const appUserExists = await Users.findOne({ email: userData.email });
-           if (dashboardUserExists || appUserExists) {
-               return res.status(409).json({
-                   msg: "Email already in use",
-                   success: false,
-               });
-           }
+        // Check if email exists in any collection
+        const dashboardUserExists = await Dashboarduser.findOne({ email: userData.email });
+        const appUserExists = await Users.findOne({ email: userData.email });
+        if (dashboardUserExists || appUserExists) {
+          return res.status(409).json({
+            msg: "Email already in use",
+            success: false,
+          });
+        }
         const savedUser = await newUser.save();
         let access_token = await issueToken({
           _id: savedUser._id,
@@ -490,7 +497,7 @@ module.exports = {
             imageUrl: savedUser.image,
           }
         };
-        return res.status(201).json({ msg: "Login successful", user: newUser,access_token, success: true });
+        return res.status(201).json({ msg: "Login successful", user: newUser, access_token, success: true });
       }
     } catch (error) {
       console.log('Error', error);
@@ -532,7 +539,7 @@ module.exports = {
     try {
       const userId = req.token._id;
       const downloadArtists = await DownloadArtist.find({ user_id: userId })
-        .populate('artist_id') 
+        .populate('artist_id')
         .exec();
 
       return res.status(200).json({
@@ -552,13 +559,13 @@ module.exports = {
       const { artistId } = req.body;
 
       // Check if the user has downloaded the artist
-       const downloadArtist = await DownloadArtist.findOne({ user_id: userId, artist_id: artistId });
+      const downloadArtist = await DownloadArtist.findOne({ user_id: userId, artist_id: artistId });
       if (!downloadArtist) {
         return res.status(400).json({ success: false, message: "Artist not found in downloads" });
       }
 
       // Remove the downloaded artist
-       await DownloadArtist.deleteOne({ _id: downloadArtist._id });
+      await DownloadArtist.deleteOne({ _id: downloadArtist._id });
 
       return res.status(200).json({ success: true, message: "Artist removed from downloads" });
     } catch (error) {
@@ -572,27 +579,27 @@ module.exports = {
   getSingleDownloadArtist: async (req, res) => {
     const userId = req.token._id;
     const { artistId } = req.params;
-    console.log("id",artistId)
+    console.log("id", artistId)
     try {
       // Fetch the artist details
       const artist = await Artist.findById(artistId);
-      console.log("artist",artist)
+      console.log("artist", artist)
       if (!artist) {
         return res.status(404).send({ message: 'Artist not found.' });
       }
       console.log("Artist:", artist);
 
       // Fetch albums associated with the artist
-      const albums = await Album.find({ artist_id: artistId }).populate('artist_id', 'name'); ;
+      const albums = await Album.find({ artist_id: artistId }).populate('artist_id', 'name');;
       console.log("Albums:", albums);
-       // Transform the album data to adjust the artist_id field and remove the original array
-       const transformedAlbums = albums.map(album => {
+      // Transform the album data to adjust the artist_id field and remove the original array
+      const transformedAlbums = albums.map(album => {
         // Assuming artist_id is always an array with one item for simplicity in this use case
         const artist = album.artist_id[0] ? {
           _id: album.artist_id[0]._id,
           name: album.artist_id[0].name
         } : '';
-  
+
         // Use object destructuring and rest to omit the artist_id field and add artistName
         const { artist_id, ...rest } = album._doc;
         return {
@@ -671,33 +678,33 @@ module.exports = {
       return res.status(500).json({ message: 'Internal server error', success: false });
     }
   },
-getSocials : async (req, res) => {
-        try {
-                const {artistId}=req.params
-                const socials = await Social.find({artist_id:artistId})
-                return res.status(200).json({socials:socials,success:true})
-        } catch (error) {
-            console.log("error",error)
-            return res.status(500).json({ message: error.message });
-        }
-    }, 
-    getNewsEvents : async (req, res) => {
-      try {
-              const {artistId}=req.params
-              const news = await News.find({artist_id:artistId})
-              const event = await Event.find({artist_id:artistId})
-              return res.status(200).json({success:true, News:news,Event:event})
-      } catch (error) {
-          console.log("error",error)
-          return res.status(500).json({ message: error.message });
-      }
-  }, 
-  getFeatureAlbums: async(req,res)=>{
+  getSocials: async (req, res) => {
+    try {
+      const { artistId } = req.params
+      const socials = await Social.find({ artist_id: artistId })
+      return res.status(200).json({ socials: socials, success: true })
+    } catch (error) {
+      console.log("error", error)
+      return res.status(500).json({ message: error.message });
+    }
+  },
+  getNewsEvents: async (req, res) => {
+    try {
+      const { artistId } = req.params
+      const news = await News.find({ artist_id: artistId })
+      const event = await Event.find({ artist_id: artistId })
+      return res.status(200).json({ success: true, News: news, Event: event })
+    } catch (error) {
+      console.log("error", error)
+      return res.status(500).json({ message: error.message });
+    }
+  },
+  getFeatureAlbums: async (req, res) => {
     try {
       const { artistId } = req.params;
       const albums = await Album.find({ artist_id: artistId, isFeatured: true })
-                                .populate('artist_id', 'name'); // Include the artist's name
-  
+        .populate('artist_id', 'name'); // Include the artist's name
+
       // Transform the album data to adjust the artist_id field and remove the original array
       const transformedAlbums = albums.map(album => {
         // Assuming artist_id is always an array with one item for simplicity in this use case
@@ -705,7 +712,7 @@ getSocials : async (req, res) => {
           _id: album.artist_id[0]._id,
           name: album.artist_id[0].name
         } : '';
-  
+
         // Use object destructuring and rest to omit the artist_id field and add artistName
         const { artist_id, ...rest } = album._doc;
         return {
@@ -713,59 +720,59 @@ getSocials : async (req, res) => {
           artistName: artist.name // Include artistName object instead of the array
         };
       });
-  
+
       res.status(200).json({ success: true, album: transformedAlbums });
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
   },
-  getArtistShop: async(req,res)=>{
+  getArtistShop: async (req, res) => {
     try {
-      const {artistId} = req.params
+      const { artistId } = req.params
       const shop = await Shop.find({ artist_id: artistId });
-      return res.status(200).json({success:true, shop:shop})
+      return res.status(200).json({ success: true, shop: shop })
     } catch (error) {
       console.error('Server error:', error);
       return res.status(500).json({ message: 'Internal server error', success: false });
     }
   },
-  getArtistPhotos: async(req, res) => {
+  getArtistPhotos: async (req, res) => {
     try {
-        const { artistId } = req.params;
-        // Find the albums and populate the photos_id field
-        const albums = await Album.find({ artist_id: artistId })
-                                  .select('photos_id -_id')
-                                  .populate('photos_id');
+      const { artistId } = req.params;
+      // Find the albums and populate the photos_id field
+      const albums = await Album.find({ artist_id: artistId })
+        .select('photos_id -_id')
+        .populate('photos_id');
 
-        // Use an object to temporarily store data to prevent duplicates
-        const photoMap = {};
-        albums.forEach(album => {
-            album.photos_id.forEach(photo => {
-                // Store each photo by its ID in an object to ensure uniqueness
-                photoMap[photo._id.toString()] = {
-                    id: photo._id.toString(),
-                    url: photo.img_url, // Assume each photo document has an 'img_url' field
-                    title: photo.title, // Assume there is a 'title' field
-                    type: photo.type
-                    // Add other fields as needed
-                };
-            });
+      // Use an object to temporarily store data to prevent duplicates
+      const photoMap = {};
+      albums.forEach(album => {
+        album.photos_id.forEach(photo => {
+          // Store each photo by its ID in an object to ensure uniqueness
+          photoMap[photo._id.toString()] = {
+            id: photo._id.toString(),
+            url: photo.img_url, // Assume each photo document has an 'img_url' field
+            title: photo.title, // Assume there is a 'title' field
+            type: photo.type
+            // Add other fields as needed
+          };
         });
+      });
 
-        // Convert the map to an array of photo objects
-        const uniquePhotosAndVideos = Object.values(photoMap);
-        
-        // Wrap the array in a 'photosAndVideos' object
-        const response = {
-          success:true,
-            photosAndVideos: uniquePhotosAndVideos
-        };
-        
-        res.status(200).json(response); // Send the wrapped array of unique photos and videos
+      // Convert the map to an array of photo objects
+      const uniquePhotosAndVideos = Object.values(photoMap);
+
+      // Wrap the array in a 'photosAndVideos' object
+      const response = {
+        success: true,
+        photosAndVideos: uniquePhotosAndVideos
+      };
+
+      res.status(200).json(response); // Send the wrapped array of unique photos and videos
     } catch (error) {
-        res.status(500).json({ message: error.message });
+      res.status(500).json({ message: error.message });
     }
-},
+  },
 
 
   getAlbumsOfUserRedeemed: async (req, res) => {
@@ -788,157 +795,157 @@ getSocials : async (req, res) => {
   },
   getRedeemedAlbums: async (req, res) => {
     const { albumId } = req.params;
-            const userId = req.token._id;
+    const userId = req.token._id;
 
-            try {
-                console.log("user", userId);
-                const userAlbums = await UserAlbum.findOne({ 
-                  user_id: userId, 
-                  album_id: albumId  // Assuming albumId is already an ObjectId or both are strings
-                });
-                if(!userAlbums){
-                  return res.status(200).json({success: true, album: {}, message: "This user hasn't redeemed this album", redeemed: false})
-                }
-                const album = await Album.findById(albumId)
-                    .populate('songs_id')
-                    .populate('label_id')
-                    .populate('photos_id')
-                    .populate({
-                        path: 'artist_id',
-                        model: 'Artist',
-                        populate: {
-                            path: 'userId',
-                            model: 'Dashboarduser'
-                        }
-                    });
-        
-                if (!album) {
-                    return res.status(404).send({ message: 'No album found with that ID', success: false });
-                }
-        
-                console.log(album);
-        
-                const songIds = album.songs_id.map(song => song._id);
-                const audios = await Audio.find({ song_id: { $in: songIds } });
-                const videos = await Video.find({ song_id: { $in: songIds } });
-        
-                const audioMap = audios.reduce((map, audio) => {
-                    map[audio.song_id.toString()] = audio;
-                    return map;
-                }, {});
-        
-                const videoMap = videos.reduce((map, video) => {
-                    map[video.song_id.toString()] = video;
-                    return map;
-                }, {});
-                console.log("useral",userAlbums)
-                const isRedeemed = userAlbums && userAlbums.album_id;
-        
-                const enhancedSongs = album.songs_id.map(song => {
-                    const likedByCurrentUser = song.likedBy.includes(userId);
-                    const songData = {
-                        ...song._doc,
-                        liked: isRedeemed && likedByCurrentUser || false, // Set liked flag based on redemption status
-                    };
-                    delete songData.likedBy;  // Remove the likedBy array from the response
-                    if (isRedeemed) {
-                        songData.audio = audioMap[song._id.toString()];
-                        songData.video = videoMap[song._id.toString()];
-                    }
-        
-                    return songData;
-                });
-                let redeemed = false
-                console.log("redeemed", isRedeemed);
-                if(isRedeemed.includes(userAlbums.album_id)){
-                  redeemed = true
-                }
-                console.log("album",album)
-                const enhancedAlbum = {
-                  artistName : album.artist_id[0].name,
-                  user_id:userId,
-                    ...album._doc,
-                    songs_id: enhancedSongs,
-                };
-        
-                return res.status(200).json({ Album: enhancedAlbum, success: true, redeemed: true });
-        
-            } catch (error) {
-                console.error('Error fetching album:', error);
-                return res.status(500).send({ message: 'Error fetching album', error: error.message });
-            }
+    try {
+      console.log("user", userId);
+      const userAlbums = await UserAlbum.findOne({
+        user_id: userId,
+        album_id: albumId  // Assuming albumId is already an ObjectId or both are strings
+      });
+      if (!userAlbums) {
+        return res.status(200).json({ success: true, album: {}, message: "This user hasn't redeemed this album", redeemed: false })
+      }
+      const album = await Album.findById(albumId)
+        .populate('songs_id')
+        .populate('label_id')
+        .populate('photos_id')
+        .populate({
+          path: 'artist_id',
+          model: 'Artist',
+          populate: {
+            path: 'userId',
+            model: 'Dashboarduser'
+          }
+        });
+
+      if (!album) {
+        return res.status(404).send({ message: 'No album found with that ID', success: false });
+      }
+
+      console.log(album);
+
+      const songIds = album.songs_id.map(song => song._id);
+      const audios = await Audio.find({ song_id: { $in: songIds } });
+      const videos = await Video.find({ song_id: { $in: songIds } });
+
+      const audioMap = audios.reduce((map, audio) => {
+        map[audio.song_id.toString()] = audio;
+        return map;
+      }, {});
+
+      const videoMap = videos.reduce((map, video) => {
+        map[video.song_id.toString()] = video;
+        return map;
+      }, {});
+      console.log("useral", userAlbums)
+      const isRedeemed = userAlbums && userAlbums.album_id;
+
+      const enhancedSongs = album.songs_id.map(song => {
+        const likedByCurrentUser = song.likedBy.includes(userId);
+        const songData = {
+          ...song._doc,
+          liked: isRedeemed && likedByCurrentUser || false, // Set liked flag based on redemption status
+        };
+        delete songData.likedBy;  // Remove the likedBy array from the response
+        if (isRedeemed) {
+          songData.audio = audioMap[song._id.toString()];
+          songData.video = videoMap[song._id.toString()];
+        }
+
+        return songData;
+      });
+      let redeemed = false
+      console.log("redeemed", isRedeemed);
+      if (isRedeemed.includes(userAlbums.album_id)) {
+        redeemed = true
+      }
+      console.log("album", album)
+      const enhancedAlbum = {
+        artistName: album.artist_id[0].name,
+        user_id: userId,
+        ...album._doc,
+        songs_id: enhancedSongs,
+      };
+
+      return res.status(200).json({ Album: enhancedAlbum, success: true, redeemed: true });
+
+    } catch (error) {
+      console.error('Error fetching album:', error);
+      return res.status(500).send({ message: 'Error fetching album', error: error.message });
+    }
   },
   getRedeemedAlbumVideos: async (req, res) => {
     const { albumId } = req.params;
     const userId = req.token._id;
 
     try {
-        const userAlbums = await UserAlbum.findOne({ user_id: userId, album_id: albumId });
-
-        if (!userAlbums) {
-            return res.status(200).json({ success: true, videos: [], message: "This user hasn't redeemed this album", redeemed: false });
-        }
-
-        const album = await Album.findById(albumId)
-            .populate({
-                path: 'songs_id'
-            });
-
-        if (!album) {
-            return res.status(404).send({ message: 'No album found with that ID', success: false });
-        }
-
-        const songIds = album.songs_id.filter(song => song.song_type === "video").map(song => song._id); // Extract song IDs only for video type songs
-
-        const videos = await Video.find({ song_id: { $in: songIds } });
-
-        const videoMap = videos.reduce((map, video) => {
-            map[video.song_id.toString()] = video;
-            return map;
-        }, {});
-
-        const enhancedSongs = album.songs_id
-            .filter(song => song.song_type === "video" && videoMap[song._id.toString()]) // Filter songs to include only those with video data
-            .map(song => {
-                const isLiked = song.likedBy && song.likedBy.includes(userId); // Check if the current user has liked the song
-                return {
-                    _id: song._id,
-                    label_id: song.label_id,
-                    genre_id: song.genre_id,
-                    song_type: song.song_type,
-                    createdAt: song.createdAt,
-                    updatedAt: song.updatedAt,
-                    __v: song.__v,
-                    isDeleted: song.isDeleted,
-                    isLiked: isLiked,  // Add the isLiked flag
-                    video: videoMap[song._id.toString()] ? {...videoMap[song._id.toString()]._doc} : null // Attach video data if available
-                };
-            });
-
-        return res.status(200).json({ success: true, videos: enhancedSongs, redeemed: true });
-    } catch (error) {
-        console.error('Error fetching album videos:', error);
-        return res.status(500).send({ message: 'Error fetching album videos', error: error.message });
-    }
-},
-getRedeemedAlbumAudios: async (req, res) => {
-  const { albumId } = req.params;
-  const userId = req.token._id;
-
-  try {
       const userAlbums = await UserAlbum.findOne({ user_id: userId, album_id: albumId });
 
       if (!userAlbums) {
-          return res.status(200).json({ success: true, audios: [], message: "This user hasn't redeemed this album", redeemed: false });
+        return res.status(200).json({ success: true, videos: [], message: "This user hasn't redeemed this album", redeemed: false });
       }
 
       const album = await Album.findById(albumId)
-          .populate({
-              path: 'songs_id'
-          });
+        .populate({
+          path: 'songs_id'
+        });
 
       if (!album) {
-          return res.status(404).send({ message: 'No album found with that ID', success: false });
+        return res.status(404).send({ message: 'No album found with that ID', success: false });
+      }
+
+      const songIds = album.songs_id.filter(song => song.song_type === "video").map(song => song._id); // Extract song IDs only for video type songs
+
+      const videos = await Video.find({ song_id: { $in: songIds } });
+
+      const videoMap = videos.reduce((map, video) => {
+        map[video.song_id.toString()] = video;
+        return map;
+      }, {});
+
+      const enhancedSongs = album.songs_id
+        .filter(song => song.song_type === "video" && videoMap[song._id.toString()]) // Filter songs to include only those with video data
+        .map(song => {
+          const isLiked = song.likedBy && song.likedBy.includes(userId); // Check if the current user has liked the song
+          return {
+            _id: song._id,
+            label_id: song.label_id,
+            genre_id: song.genre_id,
+            song_type: song.song_type,
+            createdAt: song.createdAt,
+            updatedAt: song.updatedAt,
+            __v: song.__v,
+            isDeleted: song.isDeleted,
+            isLiked: isLiked,  // Add the isLiked flag
+            video: videoMap[song._id.toString()] ? { ...videoMap[song._id.toString()]._doc } : null // Attach video data if available
+          };
+        });
+
+      return res.status(200).json({ success: true, videos: enhancedSongs, redeemed: true });
+    } catch (error) {
+      console.error('Error fetching album videos:', error);
+      return res.status(500).send({ message: 'Error fetching album videos', error: error.message });
+    }
+  },
+  getRedeemedAlbumAudios: async (req, res) => {
+    const { albumId } = req.params;
+    const userId = req.token._id;
+
+    try {
+      const userAlbums = await UserAlbum.findOne({ user_id: userId, album_id: albumId });
+
+      if (!userAlbums) {
+        return res.status(200).json({ success: true, audios: [], message: "This user hasn't redeemed this album", redeemed: false });
+      }
+
+      const album = await Album.findById(albumId)
+        .populate({
+          path: 'songs_id'
+        });
+
+      if (!album) {
+        return res.status(404).send({ message: 'No album found with that ID', success: false });
       }
 
       const songIds = album.songs_id.filter(song => song.song_type === "audio").map(song => song._id); // Extract song IDs only for audio type songs
@@ -946,34 +953,34 @@ getRedeemedAlbumAudios: async (req, res) => {
       const audios = await Audio.find({ song_id: { $in: songIds } });
 
       const audioMap = audios.reduce((map, audio) => {
-          map[audio.song_id.toString()] = audio;
-          return map;
+        map[audio.song_id.toString()] = audio;
+        return map;
       }, {});
 
       const enhancedSongs = album.songs_id
-          .filter(song => song.song_type === "audio" && audioMap[song._id.toString()]) // Filter songs to include only those with audio data
-          .map(song => {
-              const isLiked = song.likedBy && song.likedBy.includes(userId); // Check if the current user has liked the song
-              return {
-                  _id: song._id,
-                  label_id: song.label_id,
-                  genre_id: song.genre_id,
-                  song_type: song.song_type,
-                  createdAt: song.createdAt,
-                  updatedAt: song.updatedAt,
-                  __v: song.__v,
-                  isDeleted: song.isDeleted,
-                  isLiked: isLiked,  // Add the isLiked flag
-                  audio: audioMap[song._id.toString()] ? {...audioMap[song._id.toString()]._doc} : null // Attach audio data if available
-              };
-          });
+        .filter(song => song.song_type === "audio" && audioMap[song._id.toString()]) // Filter songs to include only those with audio data
+        .map(song => {
+          const isLiked = song.likedBy && song.likedBy.includes(userId); // Check if the current user has liked the song
+          return {
+            _id: song._id,
+            label_id: song.label_id,
+            genre_id: song.genre_id,
+            song_type: song.song_type,
+            createdAt: song.createdAt,
+            updatedAt: song.updatedAt,
+            __v: song.__v,
+            isDeleted: song.isDeleted,
+            isLiked: isLiked,  // Add the isLiked flag
+            audio: audioMap[song._id.toString()] ? { ...audioMap[song._id.toString()]._doc } : null // Attach audio data if available
+          };
+        });
 
       return res.status(200).json({ success: true, audios: enhancedSongs, redeemed: true });
-  } catch (error) {
+    } catch (error) {
       console.error('Error fetching album audios:', error);
       return res.status(500).send({ message: 'Error fetching album audios', error: error.message });
-  }
-},
+    }
+  },
   getAllArtists: async (req, res) => {
     try {
       const artists = await Artist.find({}).sort({ createdAt: -1 });
@@ -983,37 +990,37 @@ getRedeemedAlbumAudios: async (req, res) => {
       return res.status(500).send({ message: 'Error fetching album', error: error.message });
     }
   },
- getAllArtistsDownload: async (req, res) => {
-  try {
-    const userId = req.token._id;
+  getAllArtistsDownload: async (req, res) => {
+    try {
+      const userId = req.token._id;
 
-    const downloadedArtists = await DownloadArtist.find({ user_id: userId }).populate('artist_id');
+      const downloadedArtists = await DownloadArtist.find({ user_id: userId }).populate('artist_id');
 
-    const downloadedArtistIds = downloadedArtists
-      .map(download => download.artist_id?._id)
-      .filter(id => id)
-      .map(id => new mongoose.Types.ObjectId(id));
+      const downloadedArtistIds = downloadedArtists
+        .map(download => download.artist_id?._id)
+        .filter(id => id)
+        .map(id => new mongoose.Types.ObjectId(id));
 
-    console.log('Downloaded Artist IDs:', downloadedArtistIds);
+      console.log('Downloaded Artist IDs:', downloadedArtistIds);
 
-    const artists = await Artist.find({
-      _id: { $nin: downloadedArtistIds }
-    }).sort({ createdAt: -1 });
+      const artists = await Artist.find({
+        _id: { $nin: downloadedArtistIds }
+      }).sort({ createdAt: -1 });
 
-    return res.status(200).json({
-      success: true,
-      message: 'Artists not yet downloaded fetched successfully',
-      data: artists,
-    });
-  } catch (error) {
-    console.error('Error fetching undownloaded artists:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Error fetching artists',
-      error: error.message,
-    });
-  }
-},
+      return res.status(200).json({
+        success: true,
+        message: 'Artists not yet downloaded fetched successfully',
+        data: artists,
+      });
+    } catch (error) {
+      console.error('Error fetching undownloaded artists:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Error fetching artists',
+        error: error.message,
+      });
+    }
+  },
 
 
   getAllGenre: async (req, res) => {
@@ -1058,357 +1065,357 @@ getRedeemedAlbumAudios: async (req, res) => {
     }
   },
 
- getHistorySongs: async (req, res) => {
+  getHistorySongs: async (req, res) => {
     const userId = req.token._id;
 
     try {
-        const history = await PlayHistory.find({ user_id: userId })
-            .populate('song_id')
-            .populate('album_id');
+      const history = await PlayHistory.find({ user_id: userId })
+        .populate('song_id')
+        .populate('album_id');
 
-        if (!history.length) {
-            return res.status(404).json({
-                success: false,
-                songs:{
-                  "_id": "",
-                  "label_id": "",
-                  "genre_id": "",
-                  "song_type": "",
-                  "likedBy": [],
-                  "createdAt": "",
-                  "updatedAt": "",
-                  "__v": "",
-                  "album": {
-                      "_id": "",
-                      "artist_id": [
-                          ""
-                      ],
-                      "label_id": [
-                          ""
-                      ],
-                      "songs_id": [
-                          ""
-                      ],
-                      "photos_id": [
-                          ""
-                      ],
-                      "title": "",
-                      "isFeatured": "",
-                      "release_date": "",
-                      "description": "",
-                      "cover_image": "",
-                      "createdAt": "",
-                      "updatedAt": "",
-                      "__v": ""
-                  },
-                  "audio": {
-                      "_id": "",
-                      "song_id": "",
-                      "title": "",
-                      "audio_quality": "",
-                      "lyricsFile": "",
-                      "file_path":"",
-                       "bit_rate": "",
-                      "file_size": {
-                          "$numberDecimal": ""
-                      },
-                      "duration": "",
-                      "createdAt": "",
-                      "updatedAt": "",
-                      "__v": ""
-                  },
-                  "video": {
-                "_id": "",
-                "song_id": "",
-                "lyricsFile": "",
-                "title": "",
-                "duration": "",
-                "file_path": "",
-                "thumbnail": "",
-                "resolution": "",
-                "video_format": "",
-                "createdAt": "",
-                "updatedAt": "",
-                "__v": ""
-            }
+      if (!history.length) {
+        return res.status(404).json({
+          success: false,
+          songs: {
+            "_id": "",
+            "label_id": "",
+            "genre_id": "",
+            "song_type": "",
+            "likedBy": [],
+            "createdAt": "",
+            "updatedAt": "",
+            "__v": "",
+            "album": {
+              "_id": "",
+              "artist_id": [
+                ""
+              ],
+              "label_id": [
+                ""
+              ],
+              "songs_id": [
+                ""
+              ],
+              "photos_id": [
+                ""
+              ],
+              "title": "",
+              "isFeatured": "",
+              "release_date": "",
+              "description": "",
+              "cover_image": "",
+              "createdAt": "",
+              "updatedAt": "",
+              "__v": ""
+            },
+            "audio": {
+              "_id": "",
+              "song_id": "",
+              "title": "",
+              "audio_quality": "",
+              "lyricsFile": "",
+              "file_path": "",
+              "bit_rate": "",
+              "file_size": {
+                "$numberDecimal": ""
               },
-            });
-        }
-
-        // Filter out history items without valid song IDs and extract unique song IDs
-        const songIds = history.filter(item => item.song_id && item.song_id._id)
-                               .map(item => item.song_id._id);
-
-        // Initialize audioMap and videoMap to empty objects
-        let audioMap = {}, videoMap = {};
-
-        // Proceed only if there are valid song IDs
-        if (songIds.length > 0) {
-            const audios = await Audio.find({ song_id: { $in: songIds } });
-            const videos = await Video.find({ song_id: { $in: songIds } });
-
-            audioMap = audios.reduce((map, audio) => {
-                map[audio.song_id.toString()] = audio;
-                return map;
-            }, {});
-
-            videoMap = videos.reduce((map, video) => {
-                map[video.song_id.toString()] = video;
-                return map;
-            }, {});
-        }
-
-        // Prepare songs with their audio and video details, only for valid song_ids
-        let allSongs = history.map(item => {
-            if (item.song_id) {
-                return {
-                    ...item.song_id._doc,
-                    album: item.album_id,
-                    audio: audioMap[item.song_id._id.toString()],
-                    video: videoMap[item.song_id._id.toString()]
-                };
-            } else {
-                // Handle the case where song_id is null
-                return {
-                    album: item.album_id,
-                    audio: null,
-                    video: null
-                };
+              "duration": "",
+              "createdAt": "",
+              "updatedAt": "",
+              "__v": ""
+            },
+            "video": {
+              "_id": "",
+              "song_id": "",
+              "lyricsFile": "",
+              "title": "",
+              "duration": "",
+              "file_path": "",
+              "thumbnail": "",
+              "resolution": "",
+              "video_format": "",
+              "createdAt": "",
+              "updatedAt": "",
+              "__v": ""
             }
+          },
         });
+      }
 
-        return res.status(200).json({ songs: allSongs, success: true });
+      // Filter out history items without valid song IDs and extract unique song IDs
+      const songIds = history.filter(item => item.song_id && item.song_id._id)
+        .map(item => item.song_id._id);
+
+      // Initialize audioMap and videoMap to empty objects
+      let audioMap = {}, videoMap = {};
+
+      // Proceed only if there are valid song IDs
+      if (songIds.length > 0) {
+        const audios = await Audio.find({ song_id: { $in: songIds } });
+        const videos = await Video.find({ song_id: { $in: songIds } });
+
+        audioMap = audios.reduce((map, audio) => {
+          map[audio.song_id.toString()] = audio;
+          return map;
+        }, {});
+
+        videoMap = videos.reduce((map, video) => {
+          map[video.song_id.toString()] = video;
+          return map;
+        }, {});
+      }
+
+      // Prepare songs with their audio and video details, only for valid song_ids
+      let allSongs = history.map(item => {
+        if (item.song_id) {
+          return {
+            ...item.song_id._doc,
+            album: item.album_id,
+            audio: audioMap[item.song_id._id.toString()],
+            video: videoMap[item.song_id._id.toString()]
+          };
+        } else {
+          // Handle the case where song_id is null
+          return {
+            album: item.album_id,
+            audio: null,
+            video: null
+          };
+        }
+      });
+
+      return res.status(200).json({ songs: allSongs, success: true });
     } catch (error) {
-        console.error("Error retrieving enhanced history:", error);
-        return res.status(500).json({
-            success: false,
-            message: 'Internal server error',
-            error: error.toString()
-        });
+      console.error("Error retrieving enhanced history:", error);
+      return res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+        error: error.toString()
+      });
     }
-},
+  },
 
-listeningCount: async(req, res) => {
-  try {
-    const artistId = req.params.artistId;
-    // Define the start of the current month
-    const startOfMonth = new Date();
-    startOfMonth.setDate(1);
-    startOfMonth.setHours(0, 0, 0, 0);
+  listeningCount: async (req, res) => {
+    try {
+      const artistId = req.params.artistId;
+      // Define the start of the current month
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
 
-    // Define the end of the current month
-    const endOfMonth = new Date();
-    endOfMonth.setMonth(endOfMonth.getMonth() + 1);
-    endOfMonth.setDate(0);
-    endOfMonth.setHours(23, 59, 59, 999);
+      // Define the end of the current month
+      const endOfMonth = new Date();
+      endOfMonth.setMonth(endOfMonth.getMonth() + 1);
+      endOfMonth.setDate(0);
+      endOfMonth.setHours(23, 59, 59, 999);
 
-    // Find all albums by the artist
-    const albums = await Album.find({ artist_id: artistId });
+      // Find all albums by the artist
+      const albums = await Album.find({ artist_id: artistId });
 
-    if (albums.length === 0) {
+      if (albums.length === 0) {
         // Return default response with no songs and count 0
         return res.status(200).json({
-            playCounts: [{totalUniqueUsers: 0, songs: []}],
-            currentMonthListenerCount: 0,
-            success: true
+          playCounts: [{ totalUniqueUsers: 0, songs: [] }],
+          currentMonthListenerCount: 0,
+          success: true
         });
-    }
+      }
 
-    // Extract album IDs
-    const albumIds = albums.map(album => album._id);
+      // Extract album IDs
+      const albumIds = albums.map(album => album._id);
 
-    // Aggregate song histories to count distinct users per song and for the current month
-    const aggregateQuery = [
-      {
-        $match: {
+      // Aggregate song histories to count distinct users per song and for the current month
+      const aggregateQuery = [
+        {
+          $match: {
             album_id: { $in: albumIds },
             playedAt: { $gte: startOfMonth, $lte: endOfMonth }
-        }
-      },
-      {
-        $group: {
+          }
+        },
+        {
+          $group: {
             _id: "$song_id",
             uniqueUsers: { $addToSet: "$user_id" }
-        }
-      },
-      {
-        $group: {
+          }
+        },
+        {
+          $group: {
             _id: null,
             totalUniqueUsers: { $addToSet: "$uniqueUsers" }, // Collect arrays of unique users
             songs: { $push: { song_id: "$_id" } } // Collect song details
-        }
-      },
-      {
-        $project: {
+          }
+        },
+        {
+          $project: {
             _id: 0,
             totalUniqueUsers: { $size: { $reduce: { input: "$totalUniqueUsers", initialValue: [], in: { $setUnion: ["$$value", "$$this"] } } } },
             songs: 1
+          }
         }
+      ];
+
+      const results = await PlayHistory.aggregate(aggregateQuery);
+
+      if (results.length === 0) {
+        // If no results are found, return default response
+        return res.status(200).json({ playCounts: [{ totalUniqueUsers: 0, songs: [] }], currentMonthListenerCount: 0, success: true });
       }
-    ];
 
-    const results = await PlayHistory.aggregate(aggregateQuery);
-
-    if (results.length === 0) {
-      // If no results are found, return default response
-      return res.status(200).json({ playCounts: [{ totalUniqueUsers: 0, songs: [] }], currentMonthListenerCount: 0, success: true });
-    }
-
-    const { totalUniqueUsers, songs } = results[0];
-    return res.status(200).json({
+      const { totalUniqueUsers, songs } = results[0];
+      return res.status(200).json({
         playCounts: [{ totalUniqueUsers, songs }],
         currentMonthListenerCount: totalUniqueUsers,
         success: true
-    });
-  } catch (error) {
-    console.error("Failed to retrieve song play counts:", error);
-    return res.status(500).json({ message: "Internal server error", error });
-  }
-},
-artistSongs: async(req, res) => {
-  const userId = req.token._id;
-  try {
+      });
+    } catch (error) {
+      console.error("Failed to retrieve song play counts:", error);
+      return res.status(500).json({ message: "Internal server error", error });
+    }
+  },
+  artistSongs: async (req, res) => {
+    const userId = req.token._id;
+    try {
       const { artistId } = req.body;
       // Fetch user albums
       const userAlbums = await UserAlbum.findOne({ user_id: userId });
       if (!userAlbums || userAlbums.album_id.length === 0) {
-        return res.status(404).json({ 
-          success:true,
-            message: "No albums found for user.",
-            songs: [{
-                likedBy: [],
-                _id: null,
-                label_id: null,
-                genre_id: null,
-                song_type: null,
-                createdAt: null,
-                updatedAt: null,
-                __v: 0,
-                audio: null,
-                video: null
-            }]
+        return res.status(404).json({
+          success: true,
+          message: "No albums found for user.",
+          songs: [{
+            likedBy: [],
+            _id: null,
+            label_id: null,
+            genre_id: null,
+            song_type: null,
+            createdAt: null,
+            updatedAt: null,
+            __v: 0,
+            audio: null,
+            video: null
+          }]
         });
-    }
+      }
 
       // Fetch albums, optionally filtered by artist ID
       let query = { _id: { $in: userAlbums.album_id } };
       if (artistId) {
-          query['artist_id'] = artistId;
+        query['artist_id'] = artistId;
       }
       console.log("query", query);
       const albums = await Album.find(query)
-                                .populate({
-                                    path: 'songs_id',
-                                    populate: [{ path: 'genre_id' }]
-                                });
-      
-                                if (albums.length === 0) {
-                                  return res.status(404).json({ 
-                                      message: "No albums found.",
-                                      success:true,
-                                      songs: [{
-                                          likedBy: [],
-                                          _id: null,
-                                          label_id: null,
-                                          genre_id: null,
-                                          song_type: null,
-                                          createdAt: null,
-                                          updatedAt: null,
-                                          __v: 0,
-                                          audio: null,
-                                          video: null
-                                      }]
-                                  });
-                              }
+        .populate({
+          path: 'songs_id',
+          populate: [{ path: 'genre_id' }]
+        });
+
+      if (albums.length === 0) {
+        return res.status(404).json({
+          message: "No albums found.",
+          success: true,
+          songs: [{
+            likedBy: [],
+            _id: null,
+            label_id: null,
+            genre_id: null,
+            song_type: null,
+            createdAt: null,
+            updatedAt: null,
+            __v: 0,
+            audio: null,
+            video: null
+          }]
+        });
+      }
 
       // Extract song IDs from albums
       const songIds = albums.flatMap(album => album.songs_id.map(song => song._id));
-      
+
       // Fetch audio and video details for songs
       const audios = await Audio.find({ song_id: { $in: songIds } });
       const videos = await Video.find({ song_id: { $in: songIds } });
 
       // Maps to associate song IDs with their respective audio and video
       const audioMap = audios.reduce((map, audio) => {
-          map[audio.song_id.toString()] = audio;
-          return map;
+        map[audio.song_id.toString()] = audio;
+        return map;
       }, {});
 
       const videoMap = videos.reduce((map, video) => {
-          map[video.song_id.toString()] = video;
-          return map;
+        map[video.song_id.toString()] = video;
+        return map;
       }, {});
 
       // Prepare songs with their audio and video details
       let allSongs = [];
       albums.forEach(album => {
-          album.songs_id.forEach(song => {
-              allSongs.push({
-                  ...song._doc,
-                  audio: audioMap[song._id.toString()],
-                  video: videoMap[song._id.toString()]
-              });
+        album.songs_id.forEach(song => {
+          allSongs.push({
+            ...song._doc,
+            audio: audioMap[song._id.toString()],
+            video: videoMap[song._id.toString()]
           });
+        });
       });
 
       return res.status(200).json({ songs: allSongs, success: true });
-  } catch (error) {
+    } catch (error) {
       console.error('Error fetching user media:', error);
       return res.status(500).send({ message: 'Error fetching media', error: error.message });
-  }
-},
-getSongNames: async(req,res)=>{
-  const { id } = req.params;
+    }
+  },
+  getSongNames: async (req, res) => {
+    const { id } = req.params;
 
-  try {
-    const albums = await Album.findById(id)
-                                .populate({
-                                    path: 'songs_id',
-                                    populate: [{ path: 'genre_id' }]
-                                });
-
-                          
-                                if (!albums) {
-                                  return res.status(404).json({ success: false, message: 'Album not found' , songNames:[""]});
-                              }
- 
-        if (!albums.songs_id.length) {
-          return res.status(200).json({ success: true,message:"Album has no songs" ,songNames: [""] });
-      }
-        const songIds =albums.songs_id.map(song => song._id);
-      console.log("ids",songIds)
-        // Fetch audio and video details for songs
-        const audios = await Audio.find({ song_id: { $in: songIds } });
-        const videos = await Video.find({ song_id: { $in: songIds } });
-  
-        // Maps to associate song IDs with their respective audio and video
-        const audioMap = audios.reduce((map, audio) => {
-            map[audio.song_id.toString()] = audio;
-            return map;
-        }, {});
-  
-        const videoMap = videos.reduce((map, video) => {
-            map[video.song_id.toString()] = video;
-            return map;
-        }, {});
-  
-        // Prepare songs with their audio and video details
-        let allSongs = [];
-            albums.songs_id.forEach(song => {
-                allSongs.push({
-                    ...song._doc,
-                    audio: audioMap[song._id.toString()],
-                    video: videoMap[song._id.toString()]
-                });
+    try {
+      const albums = await Album.findById(id)
+        .populate({
+          path: 'songs_id',
+          populate: [{ path: 'genre_id' }]
         });
 
-         // Extract song names for response
-         const songNames = allSongs.map(song => song.audio ? song.audio.title : song.video ? song.video.title : "Untitled Song");
 
-  
-        return res.status(200).json({success: true ,songNames:songNames});
-  } catch (error) {
+      if (!albums) {
+        return res.status(404).json({ success: false, message: 'Album not found', songNames: [""] });
+      }
+
+      if (!albums.songs_id.length) {
+        return res.status(200).json({ success: true, message: "Album has no songs", songNames: [""] });
+      }
+      const songIds = albums.songs_id.map(song => song._id);
+      console.log("ids", songIds)
+      // Fetch audio and video details for songs
+      const audios = await Audio.find({ song_id: { $in: songIds } });
+      const videos = await Video.find({ song_id: { $in: songIds } });
+
+      // Maps to associate song IDs with their respective audio and video
+      const audioMap = audios.reduce((map, audio) => {
+        map[audio.song_id.toString()] = audio;
+        return map;
+      }, {});
+
+      const videoMap = videos.reduce((map, video) => {
+        map[video.song_id.toString()] = video;
+        return map;
+      }, {});
+
+      // Prepare songs with their audio and video details
+      let allSongs = [];
+      albums.songs_id.forEach(song => {
+        allSongs.push({
+          ...song._doc,
+          audio: audioMap[song._id.toString()],
+          video: videoMap[song._id.toString()]
+        });
+      });
+
+      // Extract song names for response
+      const songNames = allSongs.map(song => song.audio ? song.audio.title : song.video ? song.video.title : "Untitled Song");
+
+
+      return res.status(200).json({ success: true, songNames: songNames });
+    } catch (error) {
       res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    }
   }
-}
 };
